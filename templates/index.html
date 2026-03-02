@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Books</title>
+<style>
+body { margin:0; font-family:sans-serif; background:#f5f7fa; }
+.container { max-width:1200px; margin:40px auto; padding:0 20px; }
+.date-section { margin-bottom:60px; }
+.date-title { font-size:22px; font-weight:bold; margin:40px 0 20px; padding-bottom:10px; border-bottom:2px solid #333; }
+/* 最大4カラム */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 30px;
+    max-width: calc(180px * 4 + 30px * 3);
+    margin: 0 auto;
+}
+
+.image-wrapper {
+    position: relative;
+    height: 218px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:white;
+    border-radius:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* X共有ボタンオーバーレイ */
+.twitter-share {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width:36px;       /* 丸を少し大きく */
+    height:36px;
+    background: black; /* 背景を黒に */
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    border:none;
+    padding:0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
+}
+.twitter-share:hover {
+    transform: scale(1.1);
+}
+
+/* 書籍画像専用 */
+.image-wrapper > img:not(.twitter-share img) {
+    max-height:218px;
+    max-width:100%;
+    height:auto;
+    width:auto;
+}
+
+/* Xロゴ専用 */
+.twitter-share img {
+    width:25px;   /* 好きなサイズに */
+    height:25px;
+}
+
+.title, .author {
+    display: block;
+    text-decoration: none; /* 下線を消す */
+    color: inherit;        /* 元の色に合わせる */
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.author {
+    font-size: 12px;
+    color: #777;
+}
+.title:hover, .author:hover {
+    text-decoration: underline;
+    color: #000;
+}
+
+.loader { text-align:center; padding:40px; color:#999; }
+</style>
+</head>
+<body>
+
+<div class="container" id="book-container"></div>
+<div class="loader" id="loader">Loading...</div>
+
+<script>
+let nextDate = "{{ today }}";  // 未来方向
+let prevDate = "{{ yesterday }}";  // 過去方向
+let loadingNext = false;
+let loadingPrev = false;
+
+// 端末判定
+function isMobileOrTablet() {
+    const ua = navigator.userAgent.toLowerCase();
+    return /iphone|ipad|ipod|android/.test(ua);
+}
+
+// X共有処理
+function shareOnTwitter(text, url) {
+    if (isMobileOrTablet()) {
+        window.location.href = `twitter://post?message=${encodeURIComponent(text + " " + url)}`;
+    } else {
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text + " " + url)}`, "_blank");
+    }
+}
+
+// イベント委譲
+document.body.addEventListener("click", (event) => {
+    const btn = event.target.closest(".twitter-share");
+    if (!btn) return;
+    const text = btn.dataset.text;
+    const url = window.location.href;
+    shareOnTwitter(text, url);
+});
+
+// appendBooks内でカード生成
+function appendBooks(books, current_date, prepend=false){
+    if(!books.length) return;
+    const container = document.getElementById("book-container");
+    const section = document.createElement("div");
+    section.className = "date-section";
+
+    const title = document.createElement("div");
+    title.className = "date-title";
+    title.innerText = current_date;
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+
+    books.forEach(book => {
+        const card = document.createElement("div");
+
+        const imgWrapper = document.createElement("div");
+        imgWrapper.className = "image-wrapper";
+
+        const img = document.createElement("img");
+        img.src = book.image;
+        img.loading = "lazy";
+        imgWrapper.appendChild(img);
+
+        // X共有ボタン（ファイル読み込み）
+        const shareBtn = document.createElement("button");
+        shareBtn.className = "twitter-share";
+        shareBtn.dataset.text = book.title;
+
+        const logo = document.createElement("img");
+        logo.src = "/static/X-logo.svg";  // static 配下のファイルを指定
+        logo.alt = "Share on X";
+        shareBtn.appendChild(logo);
+
+        imgWrapper.appendChild(shareBtn);
+
+        // 商品ページのURL（例: Amazon ASIN を使う場合）
+        const productUrl = `https://www.amazon.co.jp/dp/${book.asin}`;
+
+        // タイトルリンク
+        const titleLink = document.createElement("a");
+        titleLink.href = productUrl;
+        titleLink.target = "_blank";  // 新しいタブで開く
+        titleLink.textContent = book.title;
+        titleLink.className = "title";
+
+        // 著者リンク
+        const authorLink = document.createElement("a");
+        authorLink.href = productUrl;
+        authorLink.target = "_blank";
+        authorLink.textContent = book.author;
+        authorLink.className = "author";
+
+        // カードに追加
+        card.appendChild(imgWrapper);
+        card.appendChild(titleLink);
+        card.appendChild(authorLink);
+
+        grid.appendChild(card);
+    });
+
+    section.appendChild(title);
+    section.appendChild(grid);
+
+    if(prepend){
+        container.prepend(section);
+    } else {
+        container.appendChild(section);
+    }
+}
+
+// 未来方向（下スクロール）
+async function loadNext(){
+    if(!nextDate || loadingNext) return;
+    loadingNext = true;
+
+    try {
+        const res = await fetch(`/api/books?date=${nextDate}&direction=next`);
+        if(!res.ok) throw new Error("Network response was not ok");
+
+        const data = await res.json();
+
+        appendBooks(data.books, data.current_date, false);
+        nextDate = data.next_date;
+
+        if(!nextDate){
+            document.getElementById("loader").innerText = "No more future books";
+        }
+
+    } catch(err){
+        console.error("Error loading books:", err);
+        document.getElementById("loader").innerText = "Error loading data";
+    }
+
+    loadingNext = false;
+}
+
+// 過去方向（上スクロール）
+async function loadPrev(){
+    if(!prevDate || loadingPrev) return;
+    loadingPrev = true;
+    const res = await fetch(`/api/books?date=${prevDate}&direction=prev`);
+    const data = await res.json();
+    appendBooks(data.books, data.current_date, true);
+    prevDate = data.next_date;
+    loadingPrev = false;
+}
+
+// 下端で未来を読み込む
+const observerNext = new IntersectionObserver(entries=>{
+    if(entries[0].isIntersecting) loadNext();
+});
+observerNext.observe(document.getElementById("loader"));
+
+// 上端で過去を読み込む
+window.addEventListener('scroll', ()=>{
+    if(window.scrollY === 0){
+        loadPrev();
+    }
+});
+
+// 表示量が少ない場合は、画面いっぱいまで増やす。
+async function ensureScrollable(){
+    while(document.body.scrollHeight <= window.innerHeight && nextDate){
+        await loadNext();
+    }
+}
+
+// 初回に今日のデータを読み込む
+loadNext().then(ensureScrollable);
+</script>
+</body>
+</html>
