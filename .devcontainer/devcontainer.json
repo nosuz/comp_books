@@ -1,6 +1,7 @@
 {
   "name": "Python",
   "workspaceFolder": "/workspaces",
+  // "init": true,
   "remoteUser": "vscode",
   "updateRemoteUserUID": true,
   // UID and GID is imported from .env file.
