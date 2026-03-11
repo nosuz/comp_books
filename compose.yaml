@@ -18,5 +18,7 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
-    command: ["uv", "run", "python", "/app/save_new_books.py"]
+      - ./html:/app/html
+    entrypoint: ["uv", "run", "python"]
+    command: ["/app/save_new_books.py"]
     restart: "no"

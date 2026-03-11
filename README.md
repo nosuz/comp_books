@@ -4,9 +4,10 @@
 
 - logs
 - data
+- html
 
 ```bash
-mkdir logs data
+mkdir logs data html
 ```
 
 ## Build Container
@@ -27,6 +28,12 @@ docker compose up -d web
 
 ```bash
 docker compose down web
+```
+
+## Start batch job
+
+```bash
+docker compose run --rm batch
 ```
 
 ## Transfer Docker Image

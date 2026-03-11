@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 import requests
 
 URL = "https://www.amazon.co.jp/s?i=stripbooks&rh=n%3A466298%2Cp_n_publication_date%3A2285919051&s=date-asc-rank&dc&qid=1771997277&rnid=82836051&ref=sr_st_date-asc-rank&ds=v1%3ABCx%2FYdfUfZira6wYEePCPFeQKnWpeDaRQ13IzFF3Geg"
-html_file_base = "html_page"
+html_file_base = "html/html_page"
 
 
 def zero_pad_date(old_date: str) -> str:
