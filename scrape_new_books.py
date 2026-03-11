@@ -5,17 +5,11 @@ import time
 import re
 import logging
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 import requests
 
 URL = "https://www.amazon.co.jp/s?i=stripbooks&rh=n%3A466298%2Cp_n_publication_date%3A2285919051&s=date-asc-rank&dc&qid=1771997277&rnid=82836051&ref=sr_st_date-asc-rank&ds=v1%3ABCx%2FYdfUfZira6wYEePCPFeQKnWpeDaRQ13IzFF3Geg"
 html_file_base = "html_page"
+
 
 def zero_pad_date(old_date: str) -> str:
     parts = old_date.split("/")
@@ -27,6 +21,8 @@ def zero_pad_date(old_date: str) -> str:
 # --------------------------
 # HTMLパースを共通化
 # --------------------------
+
+
 def parse_books(html, page_num):
     books = []
     # HTML保存
@@ -44,9 +40,12 @@ def parse_books(html, page_num):
 
     for item in list_items:
         data_asin = item.get("data-asin")
-        date_span = item.find("span", class_="a-size-base a-color-secondary a-text-normal")
-        type_div = item.find("div", class_="a-row a-spacing-mini a-size-base a-color-base")
-        h2_tag = item.find("h2", class_="a-size-medium a-spacing-none a-color-base a-text-normal")
+        date_span = item.find(
+            "span", class_="a-size-base a-color-secondary a-text-normal")
+        type_div = item.find(
+            "div", class_="a-row a-spacing-mini a-size-base a-color-base")
+        h2_tag = item.find(
+            "h2", class_="a-size-medium a-spacing-none a-color-base a-text-normal")
         title = item.select_one("h2")
         img_tag = item.select_one("img.s-image")
 
@@ -102,49 +101,10 @@ def parse_books(html, page_num):
     return books, next_url
 
 # --------------------------
-# Chrome版
-# --------------------------
-def chrome_scrape_new_books(url):
-    page_num = 1
-
-    options = Options()
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option("useAutomationExtension", False)
-
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    driver.get(url)
-
-    while True:
-        WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="listitem"]'))
-        )
-
-        html = driver.page_source
-        books, next_url = parse_books(html, page_num)
-        yield books
-
-        if not next_url:
-            print("最終ページ到達")
-            break
-
-        # 次ページへ
-        wait = WebDriverWait(driver, 10)
-        try:
-            next_button = wait.until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "a.s-pagination-next"))
-            )
-            print("次ページへ移動")
-            next_button.click()
-            page_num += 1
-            time.sleep(3)
-        except:
-            print("最終ページ到達")
-            break
-
-# --------------------------
 # requests版
 # --------------------------
+
+
 def requests_scrape_new_books(url):
     page_num = 1
     session = requests.Session()
@@ -179,30 +139,16 @@ def requests_scrape_new_books(url):
 # --------------------------
 # 共通呼び出し
 # --------------------------
-def scrape_new_books(url, browser="chrome"):
-    match browser:
-        case "chrome":
-            for books in chrome_scrape_new_books(url):
-                yield books
-        case "requests":
-            for books in requests_scrape_new_books(url):
-                yield books
-        case _:
-            logging.error("Unknown browser: " + browser)
 
-def scrape_new_comp_books(browser="requests"):
-    return scrape_new_books(URL, browser)
 
-def scrape_new_books(url, browser="chrome"):
-    match browser:
-        case "chrome":
-            for books in chrome_scrape_new_books(url):
-                yield books
-        case "requests":
-            for books in requests_scrape_new_books(url):
-                yield books
-        case _:
-            logging.error("Unknown browser: " + browser)
+def scrape_new_books(url):
+    for books in requests_scrape_new_books(url):
+        yield books
+
+
+def scrape_new_comp_books():
+    return scrape_new_books(URL)
+
 
 if __name__ == "__main__":
     # for books in scrape_new_books(URL, browser="requests"):
