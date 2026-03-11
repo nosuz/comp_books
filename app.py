@@ -7,12 +7,14 @@ import datetime
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "amazon.db")
+DB_PATH = os.path.join(BASE_DIR, "data/amazon.db")
+
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 @app.route("/")
 def index():
@@ -20,6 +22,7 @@ def index():
     today_str = today.isoformat()
     yesterday_str = (today - datetime.timedelta(days=1)).isoformat()
     return render_template("index.html", today=today_str, yesterday=yesterday_str)
+
 
 @app.route("/api/books")
 def api_books():
