@@ -1,0 +1,22 @@
+services:
+  web:
+    image: amazon_scrape:latest
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  batch:
+    image: amazon_scrape:latest
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    command: ["uv", "run", "python", "/app/save_new_books.py"]
+    restart: "no"

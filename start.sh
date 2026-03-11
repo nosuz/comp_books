@@ -28,8 +28,9 @@ caddy run --config "$SCRIPT_DIR/Caddyfile" \
   2>&1 | tee -a "$LOG_DIR/caddy.log" &
 CADDY_PID=$!
 
-gunicorn app:app \
-  --bind 0.0.0.0:8000 \
+uv run gunicorn app:app \
+  --bind localhost:7000 \
+  --no-control-socket \
   --access-logfile - \
   --error-logfile - \
   2>&1 | tee -a "$LOG_DIR/gunicorn.log" &
