@@ -33,7 +33,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update \
     && apt-get install --no-install-recommends -y \
     # ssh is required to handle GitHub in the container
-    git ssh \
+    # git ssh \
     python3 \
     # curl is required to install uv
     curl \
@@ -48,6 +48,8 @@ RUN --mount=type=cache,target=/var/cache/apt \
     && ln -fs /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
     && dpkg-reconfigure -f noninteractive tzdata
 
+WORKDIR /app
+
 # install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
@@ -58,22 +60,14 @@ ENV UV_PROJECT_ENVIRONMENT=/home/vscode/venv
 ARG UV_CACHE_DIR=/home/vscode/.cache/uv
 RUN mkdir -p $UV_CACHE_DIR
 
+COPY . .
+
 # blank uv.lock is just place holder.
 # remove this before adding the initial library.
 COPY pyproject.toml uv.lock ./
 # set `--frozen` to `uv sync` on runtime
 RUN --mount=type=cache,target=$UV_CACHE_DIR,uid=$UID,gid=$UID,sharing=locked \
     uv venv /home/vscode/venv \
-    && if [ -s uv.lock ]; then uv sync; fi
+    && if [ -s uv.lock ]; then uv sync --frozen; fi
 
-# activate venv
-RUN cat <<'EOF' >> /home/vscode/.bashrc
-
-export LANG=$LANG
-
-if [ -n "$UV_PROJECT_ENVIRONMENT" ] &&
-    [ -f "$UV_PROJECT_ENVIRONMENT/bin/activate" ] &&
-    [ -z "$VIRTUAL_ENV" ]; then
-    . "$UV_PROJECT_ENVIRONMENT/bin/activate"
-fi
-EOF
+ENTRYPOINT ["/bin/bash", "/app/start.sh"]
