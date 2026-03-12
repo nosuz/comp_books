@@ -22,8 +22,6 @@
 #    その "client_email" を追加
 
 import sys
-import logging
-from logging.handlers import RotatingFileHandler
 import datetime
 import sqlite3
 import datetime
@@ -34,23 +32,6 @@ from scrape_new_books import scrape_new_comp_books
 # 今日の日付
 today = datetime.date.today()
 today_str = today.isoformat()
-
-# root ロガーを取得
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
-
-# ローテートハンドラ作成
-handler = RotatingFileHandler(
-    "logs/save_new_books.log",
-    maxBytes=1*1024*1024,
-    backupCount=3,
-    encoding="utf-8"
-)
-formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-handler.setFormatter(formatter)
-
-# root ロガーに追加
-root_logger.addHandler(handler)
 
 
 def sqlite_insert(conn, books):
@@ -84,17 +65,10 @@ CREATE TABLE IF NOT EXISTS books (
     """, new_entries)
 
 
-def log_uncaught_exceptions(exctype, value, tb):
-    import traceback
-    logging.critical("未捕捉例外", exc_info=(exctype, value, tb))
-
-
 if __name__ == "__main__":
-    sys.excepthook = log_uncaught_exceptions
-
     with sqlite3.connect("data/amazon.db") as conn:
         c = conn.cursor()
-        logging.info("処理を実行します")
+        print("処理を実行します")
         # 新刊情報を取得
         for books in scrape_new_comp_books():
             # SQLiteに新刊情報を保存する。

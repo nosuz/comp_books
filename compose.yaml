@@ -1,13 +1,14 @@
 services:
   web:
     image: amazon_scrape:latest
+    logging:
+      driver: syslog
     build:
       context: .
       args:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
     volumes:
-      - ./logs:/app/logs
       - ./data:/app/data
     ports:
       - "80:8000"
@@ -16,7 +17,6 @@ services:
   batch:
     image: amazon_scrape:latest
     volumes:
-      - ./logs:/app/logs
       - ./data:/app/data
       - ./html:/app/html
     entrypoint: ["uv", "run", "python"]

@@ -2,12 +2,11 @@
 
 ## Required folders
 
-- logs
 - data
 - html
 
 ```bash
-mkdir logs data html
+mkdir data html
 ```
 
 ## Build Container
@@ -42,7 +41,7 @@ docker compose run --rm batch
 
 ```bash
 docker save pskreporter-app:latest -o app.tar
-tar zcvf ~/pskreporter_image.tgz app.tar compose.yaml README.md
+tar zcvf ~/pskreporter_image.tgz app.tar Dockerfile compose.yaml README.md
 ```
 
 ### transfer image

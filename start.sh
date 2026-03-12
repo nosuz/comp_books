@@ -2,14 +2,14 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="$SCRIPT_DIR/logs"
-mkdir -p "$LOG_DIR"
 
 CADDY_PID=""
 GUNICORN_PID=""
 
 cleanup() {
-  echo "Shutting down..."
+  local exit_code=${1:-0}
+
+  echo "[start.sh] shutting down..."
 
   if [ -n "${GUNICORN_PID}" ] && kill -0 "${GUNICORN_PID}" 2>/dev/null; then
     kill -TERM "${GUNICORN_PID}" 2>/dev/null || true
@@ -20,23 +20,42 @@ cleanup() {
   fi
 
   wait || true
+  return "$exit_code"
 }
 
-trap cleanup TERM INT
+on_signal() {
+  echo "[start.sh] signal received"
+  cleanup 0
+  exit 0
+}
 
-caddy run --config "$SCRIPT_DIR/Caddyfile" \
-  2>&1 | tee -a "$LOG_DIR/caddy.log" &
-CADDY_PID=$!
+trap on_signal TERM INT
 
-uv run gunicorn app:app \
-  --bind localhost:7000 \
-  --no-control-socket \
-  --access-logfile - \
-  --error-logfile - \
-  2>&1 | tee -a "$LOG_DIR/gunicorn.log" &
-GUNICORN_PID=$!
+start_caddy() {
+  caddy run --config "$SCRIPT_DIR/Caddyfile" 2>&1 \
+    | sed -u 's/^/[caddy] /' &
+  CADDY_PID=$!
+}
 
-wait -n
+start_gunicorn() {
+  uv run gunicorn app:app \
+    --bind localhost:7000 \
+    --no-control-socket \
+    --access-logfile - \
+    --error-logfile - \
+    2>&1 | sed -u 's/^/[gunicorn] /' &
+  GUNICORN_PID=$!
+}
 
-cleanup
-exit $?
+start_caddy
+start_gunicorn
+
+set +e
+wait -n "$CADDY_PID" "$GUNICORN_PID"
+EXIT_CODE=$?
+set -e
+
+echo "[start.sh] one process exited with code $EXIT_CODE"
+
+cleanup "$EXIT_CODE"
+exit "$EXIT_CODE"

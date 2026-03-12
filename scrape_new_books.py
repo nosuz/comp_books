@@ -3,7 +3,6 @@
 from pathlib import Path
 import time
 import re
-import logging
 from bs4 import BeautifulSoup
 import requests
 
@@ -77,11 +76,11 @@ def parse_books(html, page_num):
         img_url = img_tag["src"] if img_tag else ""
 
         if re.match("スポンサー広告", label_text):
-            logging.info(f"SKIP(広告): {title_text}")
+            print(f"SKIP(広告): {title_text}")
         elif type_text and re.match("Kindle版|ペーパーバック", type_text):
-            logging.info(f"SKIP(Kindle or ペーパー): {title_text}")
+            print(f"SKIP(Kindle or ペーパー): {title_text}")
         else:
-            logging.info(f"Get: {title_text}")
+            print(f"Get: {title_text}")
             books.append({
                 "date": date_text,
                 "title": title_text,
@@ -121,7 +120,7 @@ def requests_scrape_new_books(url):
         print(f"GET: {url}")
         response = session.get(url, headers=headers)
         if response.status_code != 200:
-            logging.error(f"HTTP Error: {response.status_code}")
+            print(f"HTTP Error: {response.status_code}")
             break
 
         html = response.text
