@@ -40,8 +40,8 @@ docker compose run --rm batch
 ### extract image
 
 ```bash
-docker save pskreporter-app:latest -o app.tar
-tar zcvf ~/pskreporter_image.tgz app.tar Dockerfile compose.yaml README.md
+docker save amazon_scrape:latest -o app.tar
+tar zcvf ~/pskreporter_image.tgz app.tar compose.yaml README.md
 ```
 
 ### transfer image
