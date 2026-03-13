@@ -1,6 +1,6 @@
 services:
   web:
-    image: amazon_scrape:latest
+    image: amazon_scrape
     logging:
       driver: syslog
     build:
