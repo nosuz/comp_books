@@ -59,12 +59,13 @@ USER vscode
 ENV UV_PROJECT_ENVIRONMENT=/home/vscode/venv
 ARG UV_CACHE_DIR=/home/vscode/.cache/uv
 RUN mkdir -p $UV_CACHE_DIR
+# Disable development dependencies
+ENV UV_NO_DEV=1
+# specify `__pycache__` directory
+ENV PYTHONPYCACHEPREFIX=/tmp/pycache
 
 COPY . .
 
-# blank uv.lock is just place holder.
-# remove this before adding the initial library.
-COPY pyproject.toml uv.lock ./
 # set `--frozen` to `uv sync` on runtime
 RUN --mount=type=cache,target=$UV_CACHE_DIR,uid=$UID,gid=$UID,sharing=locked \
     uv venv /home/vscode/venv \
