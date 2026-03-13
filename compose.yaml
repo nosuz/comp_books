@@ -3,11 +3,10 @@ services:
     image: amazon_scrape
     logging:
       driver: syslog
+    environment:
+      TZ: Asia/Tokyo
     build:
       context: .
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
     volumes:
       - ./data:/app/data
     ports:
@@ -18,6 +17,8 @@ services:
     image: amazon_scrape
     logging:
       driver: syslog
+    environment:
+      TZ: Asia/Tokyo
     volumes:
       - ./data:/app/data
       - ./html:/app/html
