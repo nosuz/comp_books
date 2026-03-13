@@ -21,7 +21,11 @@ def index():
     today = datetime.date.today()
     today_str = today.isoformat()
     yesterday_str = (today - datetime.timedelta(days=1)).isoformat()
-    return render_template("index.html", today=today_str, yesterday=yesterday_str)
+    return render_template(
+        "index.html",
+        today=today_str,
+        yesterday=yesterday_str,
+    )
 
 
 @app.route("/api/books")
@@ -29,7 +33,6 @@ def api_books():
     target_date = request.args.get("date")
     if target_date:
         try:
-            # ISO形式チェック
             datetime.datetime.strptime(target_date, "%Y-%m-%d")
         except ValueError:
             return jsonify({"error": "Invalid date format"}), 400
@@ -41,48 +44,55 @@ def api_books():
     conn = get_db()
     cur = conn.cursor()
 
-    if not target_date:
-        target_date = datetime.date.today().isoformat()
-
     # 1. ターゲット日のデータ取得
-    cur.execute("""
+    cur.execute(
+        """
         SELECT title, author, image, date, asin
         FROM books
         WHERE date = ?
         ORDER BY title
-    """, (target_date,))
+        """,
+        (target_date,),
+    )
     books = [dict(r) for r in cur.fetchall()]
 
     # 2. 次に読み込む日付を取得
     if direction == "prev":
-        # 過去方向
-        cur.execute("""
-            SELECT DISTINCT date FROM books
+        cur.execute(
+            """
+            SELECT DISTINCT date
+            FROM books
             WHERE date < ?
             ORDER BY date DESC
             LIMIT 1
-        """, (target_date,))
+            """,
+            (target_date,),
+        )
     else:
-        # 未来方向
-        cur.execute("""
-            SELECT DISTINCT date FROM books
+        cur.execute(
+            """
+            SELECT DISTINCT date
+            FROM books
             WHERE date > ?
             ORDER BY date ASC
             LIMIT 1
-        """, (target_date,))
+            """,
+            (target_date,),
+        )
 
     next_row = cur.fetchone()
     next_date = next_row["date"] if next_row else None
 
     conn.close()
 
-    return jsonify({
-        "books": books,
-        "current_date": target_date,
-        "next_date": next_date
-    })
+    return jsonify(
+        {
+            "books": books,
+            "current_date": target_date,
+            "next_date": next_date,
+        }
+    )
 
 
 if __name__ == "__main__":
-    # app.run(debug=False)
     app.run(debug=True)

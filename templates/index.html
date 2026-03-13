@@ -5,10 +5,131 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Books</title>
 <style>
-body { margin:0; font-family:sans-serif; background:#f5f7fa; }
-.container { max-width:1200px; margin:40px auto; padding:0 20px; }
-.date-section { margin-bottom:60px; }
-.date-title { font-size:22px; font-weight:bold; margin:40px 0 20px; padding-bottom:10px; border-bottom:2px solid #333; }
+:root {
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --text: #222;
+    --muted: #666;
+    --line: #d7dde5;
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+    --today-bg: #fff8e1;
+    --today-line: #f4b400;
+    --today-text: #8a4b00;
+
+    --accent: #ff9800;
+    --accent-hover: #f57c00;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* 上部の現在位置バー */
+.top-status {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+}
+
+.top-status-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-badge {
+    flex: 0 0 auto;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--today-text);
+    background: var(--today-bg);
+    border: 1px solid var(--today-line);
+    border-radius: 999px;
+    padding: 6px 12px;
+}
+
+.status-text {
+    font-size: 14px;
+    color: var(--muted);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 24px auto 40px;
+    padding: 0 20px 80px;
+}
+
+/* 上下のロード監視用 */
+.sentinel {
+    height: 1px;
+    width: 100%;
+}
+
+.date-section {
+    margin-bottom: 56px;
+    scroll-margin-top: 76px;
+}
+
+.date-section-inner {
+    padding: 0;
+    border-radius: 16px;
+}
+
+.date-section.is-today .date-section-inner {
+    background: var(--today-bg);
+    border: 2px solid var(--today-line);
+    padding: 18px 18px 22px;
+    box-shadow: 0 8px 20px rgba(244, 180, 0, 0.12);
+}
+
+.date-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 32px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #333;
+    color: var(--text);
+}
+
+.date-section.is-today .date-title {
+    margin-top: 0;
+    color: var(--today-text);
+    border-bottom-color: var(--today-line);
+}
+
+.date-subtitle {
+    margin: -8px 0 18px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.date-section.is-today .date-subtitle {
+    color: #6d5a2d;
+}
+
 /* 最大4カラム */
 .grid {
     display: grid;
@@ -18,100 +139,211 @@ body { margin:0; font-family:sans-serif; background:#f5f7fa; }
     margin: 0 auto;
 }
 
+.card {
+    min-width: 0;
+}
+
 .image-wrapper {
     position: relative;
     height: 218px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:white;
-    border-radius:10px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
 }
 
-/* X共有ボタンオーバーレイ */
+.date-section.is-today .image-wrapper {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.14);
+    border: 1px solid rgba(244, 180, 0, 0.35);
+}
+
+.image-wrapper > img:not(.twitter-share img) {
+    max-height: 218px;
+    max-width: 100%;
+    height: auto;
+    width: auto;
+}
+
+/* X共有ボタン */
 .twitter-share {
     position: absolute;
     top: 6px;
     right: 6px;
-    width:36px;       /* 丸を少し大きく */
-    height:36px;
-    background: black; /* 背景を黒に */
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    border:none;
-    padding:0;
+    width: 40px;
+    height: 40px;
+    background: black;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    padding: 0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     transition: transform 0.2s;
 }
-.twitter-share:hover {
-    transform: scale(1.1);
+
+.twitter-share:hover,
+.twitter-share:focus-visible {
+    transform: scale(1.08);
 }
 
-/* 書籍画像専用 */
-.image-wrapper > img:not(.twitter-share img) {
-    max-height:218px;
-    max-width:100%;
-    height:auto;
-    width:auto;
+.twitter-share:focus-visible,
+.today-fab:focus-visible {
+    outline: 3px solid #005fcc;
+    outline-offset: 2px;
 }
 
-/* Xロゴ専用 */
 .twitter-share img {
-    width:25px;   /* 好きなサイズに */
-    height:25px;
+    width: 25px;
+    height: 25px;
 }
 
-.title, .author {
+.title,
+.author {
     display: block;
-    text-decoration: none; /* 下線を消す */
-    color: inherit;        /* 元の色に合わせる */
+    text-decoration: none;
+    color: inherit;
     margin-top: 10px;
     font-size: 14px;
     font-weight: 600;
+    line-height: 1.5;
 }
+
 .author {
     font-size: 12px;
     color: #777;
 }
-.title:hover, .author:hover {
+
+.title:hover,
+.author:hover,
+.title:focus-visible,
+.author:focus-visible {
     text-decoration: underline;
     color: #000;
 }
 
-.loader { text-align:center; padding:40px; color:#999; }
+.loader {
+    text-align: center;
+    padding: 20px 20px 40px;
+    color: #777;
+    font-size: 14px;
+}
+
+/* 右下固定「今日へ戻る」 */
+.today-fab {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1100;
+    width: 72px;
+    height: 72px;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.22);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.today-fab:hover {
+    background: var(--accent-hover);
+}
+
+.today-fab .icon {
+    font-size: 20px;
+}
+
+.today-fab .label {
+    font-size: 12px;
+}
+
+/* モバイル */
+@media (max-width: 640px) {
+    .container {
+        margin-top: 18px;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .top-status-inner {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .date-title {
+        font-size: 20px;
+    }
+
+    .grid {
+        gap: 22px;
+    }
+
+    .today-fab {
+        right: 14px;
+        bottom: 14px;
+        width: 68px;
+        height: 68px;
+    }
+}
 </style>
 </head>
 <body>
 
-<div class="container" id="book-container"></div>
-<div class="loader" id="loader">Loading...</div>
+<header class="top-status" aria-label="現在位置">
+    <div class="top-status-inner">
+        <div class="status-badge" id="status-badge">📅 今日</div>
+        <div class="status-text" id="status-text">読み込み中...</div>
+    </div>
+</header>
+
+<div class="container">
+    <div id="top-sentinel" class="sentinel" aria-hidden="true"></div>
+    <div id="book-container"></div>
+    <div id="bottom-sentinel" class="sentinel" aria-hidden="true"></div>
+</div>
+
+<div class="loader" id="loader" aria-live="polite">Loading...</div>
+
+<button id="todayBtn" class="today-fab" type="button" aria-label="今日発売の場所へ戻る">
+    <span class="icon" aria-hidden="true">📅</span>
+    <span class="label">今日</span>
+</button>
 
 <script>
-let nextDate = "{{ today }}";  // 未来方向
-let prevDate = "{{ yesterday }}";  // 過去方向
+const TODAY = "{{ today }}";
+let nextDate = TODAY;              // 未来方向の読み込み開始日
+let prevDate = "{{ yesterday }}";  // 過去方向の読み込み開始日
 let loadingNext = false;
 let loadingPrev = false;
 
-// 端末判定
 function isMobileOrTablet() {
     const ua = navigator.userAgent.toLowerCase();
     return /iphone|ipad|ipod|android/.test(ua);
 }
 
-// X共有処理
 function shareOnTwitter(text, url) {
+    const body = `${text} ${url}`;
     if (isMobileOrTablet()) {
-        window.location.href = `twitter://post?message=${encodeURIComponent(text + " " + url)}`;
+        window.location.href = `twitter://post?message=${encodeURIComponent(body)}`;
     } else {
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text + " " + url)}`, "_blank");
+        window.open(
+            `https://twitter.com/intent/tweet?text=${encodeURIComponent(body)}`,
+            "_blank"
+        );
     }
 }
 
-// イベント委譲
 document.body.addEventListener("click", (event) => {
     const btn = event.target.closest(".twitter-share");
     if (!btn) return;
@@ -120,22 +352,49 @@ document.body.addEventListener("click", (event) => {
     shareOnTwitter(text, url);
 });
 
-// appendBooks内でカード生成
-function appendBooks(books, current_date, prepend=false){
-    if(!books.length) return;
-    const container = document.getElementById("book-container");
-    const section = document.createElement("div");
+function formatDateLabel(dateStr) {
+    if (dateStr === TODAY) {
+        return `📅 今日発売 (${dateStr})`;
+    }
+    return dateStr;
+}
+
+function createSection(books, currentDate) {
+    const section = document.createElement("section");
     section.className = "date-section";
+    section.dataset.date = currentDate;
+
+    const isToday = currentDate === TODAY;
+    if (isToday) {
+        section.classList.add("is-today");
+        section.id = "today-section";
+        section.setAttribute("aria-label", `今日発売 ${currentDate}`);
+    } else {
+        section.setAttribute("aria-label", `${currentDate} 発売`);
+    }
+
+    const inner = document.createElement("div");
+    inner.className = "date-section-inner";
 
     const title = document.createElement("div");
     title.className = "date-title";
-    title.innerText = current_date;
+    title.textContent = formatDateLabel(currentDate);
+
+    inner.appendChild(title);
+
+    if (isToday) {
+        const subtitle = document.createElement("div");
+        subtitle.className = "date-subtitle";
+        subtitle.textContent = "ここが今日発売の本です。右下の「今日」ボタンでいつでもこの位置へ戻れます。";
+        inner.appendChild(subtitle);
+    }
 
     const grid = document.createElement("div");
     grid.className = "grid";
 
     books.forEach(book => {
-        const card = document.createElement("div");
+        const card = document.createElement("article");
+        card.className = "card";
 
         const imgWrapper = document.createElement("div");
         imgWrapper.className = "image-wrapper";
@@ -143,114 +402,262 @@ function appendBooks(books, current_date, prepend=false){
         const img = document.createElement("img");
         img.src = book.image;
         img.loading = "lazy";
+        img.alt = `${book.title} の表紙`;
         imgWrapper.appendChild(img);
 
-        // X共有ボタン（ファイル読み込み）
         const shareBtn = document.createElement("button");
         shareBtn.className = "twitter-share";
         shareBtn.dataset.text = book.title;
+        shareBtn.type = "button";
+        shareBtn.setAttribute("aria-label", `${book.title} を X で共有`);
 
         const logo = document.createElement("img");
-        logo.src = "/static/X-logo.svg";  // static 配下のファイルを指定
-        logo.alt = "Share on X";
+        logo.src = "/static/X-logo.svg";
+        logo.alt = "";
         shareBtn.appendChild(logo);
-
         imgWrapper.appendChild(shareBtn);
 
-        // 商品ページのURL（例: Amazon ASIN を使う場合）
         const productUrl = `https://www.amazon.co.jp/dp/${book.asin}`;
 
-        // タイトルリンク
         const titleLink = document.createElement("a");
         titleLink.href = productUrl;
-        titleLink.target = "_blank";  // 新しいタブで開く
+        titleLink.target = "_blank";
+        titleLink.rel = "noopener noreferrer";
         titleLink.textContent = book.title;
         titleLink.className = "title";
 
-        // 著者リンク
         const authorLink = document.createElement("a");
         authorLink.href = productUrl;
         authorLink.target = "_blank";
+        authorLink.rel = "noopener noreferrer";
         authorLink.textContent = book.author;
         authorLink.className = "author";
 
-        // カードに追加
         card.appendChild(imgWrapper);
         card.appendChild(titleLink);
         card.appendChild(authorLink);
-
         grid.appendChild(card);
     });
 
-    section.appendChild(title);
-    section.appendChild(grid);
+    inner.appendChild(grid);
+    section.appendChild(inner);
 
-    if(prepend){
+    return section;
+}
+
+function appendBooks(books, currentDate, prepend = false) {
+    if (!books.length) return;
+
+    const container = document.getElementById("book-container");
+
+    // 同じ日付を重複追加しない
+    if (container.querySelector(`[data-date="${CSS.escape(currentDate)}"]`)) {
+        return;
+    }
+
+    const section = createSection(books, currentDate);
+
+    if (prepend) {
         container.prepend(section);
     } else {
         container.appendChild(section);
     }
+
+    observeSection(section);
+    updateStatusByViewport();
 }
 
-// 未来方向（下スクロール）
-async function loadNext(){
-    if(!nextDate || loadingNext) return;
+async function fetchBooks(date, direction) {
+    const res = await fetch(`/api/books?date=${encodeURIComponent(date)}&direction=${encodeURIComponent(direction)}`);
+    if (!res.ok) {
+        throw new Error("Network response was not ok");
+    }
+    return await res.json();
+}
+
+async function loadNext() {
+    if (!nextDate || loadingNext) return;
+
     loadingNext = true;
-
     try {
-        const res = await fetch(`/api/books?date=${nextDate}&direction=next`);
-        if(!res.ok) throw new Error("Network response was not ok");
-
-        const data = await res.json();
-
+        const data = await fetchBooks(nextDate, "next");
         appendBooks(data.books, data.current_date, false);
         nextDate = data.next_date;
 
-        if(!nextDate){
-            document.getElementById("loader").innerText = "No more future books";
+        if (!nextDate) {
+            document.getElementById("loader").innerText = "これより先の発売予定はありません";
+        } else {
+            document.getElementById("loader").innerText = "Loading...";
         }
-
-    } catch(err){
-        console.error("Error loading books:", err);
-        document.getElementById("loader").innerText = "Error loading data";
+    } catch (err) {
+        console.error("Error loading next books:", err);
+        document.getElementById("loader").innerText = "未来方向の読み込みに失敗しました";
+    } finally {
+        loadingNext = false;
     }
-
-    loadingNext = false;
 }
 
-// 過去方向（上スクロール）
-async function loadPrev(){
-    if(!prevDate || loadingPrev) return;
+async function loadPrev() {
+    if (!prevDate || loadingPrev) return;
+
     loadingPrev = true;
-    const res = await fetch(`/api/books?date=${prevDate}&direction=prev`);
-    const data = await res.json();
-    appendBooks(data.books, data.current_date, true);
-    prevDate = data.next_date;
-    loadingPrev = false;
+    try {
+        const beforeHeight = document.documentElement.scrollHeight;
+        const beforeTop = window.scrollY;
+
+        const data = await fetchBooks(prevDate, "prev");
+        appendBooks(data.books, data.current_date, true);
+        prevDate = data.next_date;
+
+        // prepend 時の視点ジャンプを補正
+        const afterHeight = document.documentElement.scrollHeight;
+        const delta = afterHeight - beforeHeight;
+        window.scrollTo(0, beforeTop + delta);
+    } catch (err) {
+        console.error("Error loading previous books:", err);
+    } finally {
+        loadingPrev = false;
+    }
 }
 
-// 下端で未来を読み込む
-const observerNext = new IntersectionObserver(entries=>{
-    if(entries[0].isIntersecting) loadNext();
-});
-observerNext.observe(document.getElementById("loader"));
-
-// 上端で過去を読み込む
-window.addEventListener('scroll', ()=>{
-    if(window.scrollY === 0){
-        loadPrev();
-    }
-});
-
-// 表示量が少ない場合は、画面いっぱいまで増やす。
-async function ensureScrollable(){
-    while(document.body.scrollHeight <= window.innerHeight && nextDate){
+async function ensureScrollable() {
+    while (document.body.scrollHeight <= window.innerHeight && nextDate) {
         await loadNext();
     }
 }
 
-// 初回に今日のデータを読み込む
-loadNext().then(ensureScrollable);
+async function ensureTodayVisible() {
+    const todaySection = document.getElementById("today-section");
+    if (!todaySection) {
+        await loadNext();
+    }
+    const el = document.getElementById("today-section");
+    if (el) {
+        el.scrollIntoView({ behavior: "auto", block: "start" });
+    }
+    updateStatusByViewport();
+}
+
+document.getElementById("todayBtn").addEventListener("click", async () => {
+    let el = document.getElementById("today-section");
+    if (!el) {
+        await ensureTodayVisible();
+        el = document.getElementById("today-section");
+    }
+    if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+});
+
+/* 上下端監視 */
+const observerNext = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+        loadNext();
+    }
+}, {
+    root: null,
+    rootMargin: "300px 0px",
+    threshold: 0
+});
+
+const observerPrev = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+        loadPrev();
+    }
+}, {
+    root: null,
+    rootMargin: "300px 0px",
+    threshold: 0
+});
+
+observerNext.observe(document.getElementById("bottom-sentinel"));
+observerPrev.observe(document.getElementById("top-sentinel"));
+
+/* 現在位置インジケータ */
+let visibleSections = new Map();
+let sectionObserver = null;
+
+function observeSection(section) {
+    if (!sectionObserver) return;
+    sectionObserver.observe(section);
+}
+
+function updateStatusByViewport() {
+    const statusText = document.getElementById("status-text");
+    const statusBadge = document.getElementById("status-badge");
+
+    const sections = [...document.querySelectorAll(".date-section")];
+    if (!sections.length) {
+        statusText.textContent = "読み込み中...";
+        return;
+    }
+
+    let current = null;
+
+    if (visibleSections.size > 0) {
+        const visible = [...visibleSections.values()]
+            .sort((a, b) => Math.abs(a.top) - Math.abs(b.top));
+        current = visible[0]?.element || null;
+    }
+
+    if (!current) {
+        current = sections.find(sec => sec.getBoundingClientRect().top >= 0) || sections[sections.length - 1];
+    }
+
+    const currentDate = current?.dataset.date || "";
+    if (!currentDate) {
+        statusText.textContent = "読み込み中...";
+        return;
+    }
+
+    if (currentDate === TODAY) {
+        statusBadge.textContent = "📅 今日";
+        statusText.textContent = `現在位置: 今日発売 (${currentDate})`;
+    } else if (currentDate < TODAY) {
+        statusBadge.textContent = "← 過去";
+        statusText.textContent = `現在位置: ${currentDate} 発売（過去）`;
+    } else {
+        statusBadge.textContent = "未来 →";
+        statusText.textContent = `現在位置: ${currentDate} 発売（未来）`;
+    }
+}
+
+function setupSectionObserver() {
+    sectionObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+            const section = entry.target;
+            if (entry.isIntersecting) {
+                visibleSections.set(section.dataset.date, {
+                    element: section,
+                    top: entry.boundingClientRect.top
+                });
+            } else {
+                visibleSections.delete(section.dataset.date);
+            }
+        }
+        updateStatusByViewport();
+    }, {
+        root: null,
+        threshold: [0, 0.15, 0.3, 0.5, 0.8]
+    });
+}
+
+window.addEventListener("scroll", () => {
+    updateStatusByViewport();
+}, { passive: true });
+
+window.addEventListener("resize", () => {
+    updateStatusByViewport();
+});
+
+async function init() {
+    setupSectionObserver();
+    await loadNext();         // まず今日を読み込む
+    await ensureScrollable(); // 画面に十分な量を表示
+    updateStatusByViewport();
+}
+
+init();
 </script>
 </body>
 </html>
