@@ -64,11 +64,12 @@ ENV UV_NO_DEV=1
 # specify `__pycache__` directory
 ENV PYTHONPYCACHEPREFIX=/tmp/pycache
 
-COPY . .
-
+COPY pyproject.toml uv.lock ./
 # set `--frozen` to `uv sync` on runtime
 RUN --mount=type=cache,target=$UV_CACHE_DIR,uid=$UID,gid=$UID,sharing=locked \
     uv venv /home/vscode/venv \
     && if [ -s uv.lock ]; then uv sync --frozen; fi
+
+COPY . .
 
 ENTRYPOINT ["/bin/bash", "/app/start.sh"]
