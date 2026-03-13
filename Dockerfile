@@ -35,10 +35,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
     # ssh is required to handle GitHub in the container
     # git ssh \
     python3 \
-    # curl is required to install uv
-    curl \
-    # http server
-    caddy \
     # System tools
     locales tzdata \
     # Configure locale
@@ -72,4 +68,8 @@ RUN --mount=type=cache,target=$UV_CACHE_DIR,uid=$UID,gid=$UID,sharing=locked \
 
 COPY . .
 
-ENTRYPOINT ["/bin/bash", "/app/start.sh"]
+ENTRYPOINT ["uv", "run", "gunicorn", "app:app", \
+    "--bind", "0.0.0.0:7000", \
+    "--no-control-socket", \
+    "--access-logfile", "-", \
+    "--error-logfile", "-"]

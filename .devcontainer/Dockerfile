@@ -35,10 +35,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
     # ssh is required to handle GitHub in the container
     git ssh \
     python3 \
-    # curl is required to install uv
-    curl \
-    # http server
-    caddy \
     # System tools
     locales tzdata \
     # Configure locale
