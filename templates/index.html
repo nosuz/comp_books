@@ -36,7 +36,6 @@ body {
     color: var(--text);
 }
 
-/* 上部の現在位置バー */
 .top-status {
     position: sticky;
     top: 0;
@@ -81,9 +80,8 @@ body {
     padding: 0 20px 80px;
 }
 
-/* 上下のロード監視用 */
 .sentinel {
-    height: 1px;
+    height: 24px;
     width: 100%;
 }
 
@@ -130,7 +128,6 @@ body {
     color: #6d5a2d;
 }
 
-/* 最大4カラム */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -147,7 +144,7 @@ body {
     position: relative;
     height: 218px;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     background: white;
     border-radius: 10px;
@@ -160,46 +157,129 @@ body {
     border: 1px solid rgba(244, 180, 0, 0.35);
 }
 
-.image-wrapper > img:not(.twitter-share img) {
+.image-link {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.image-link:hover .book-image,
+.image-link:focus-visible .book-image {
+    transform: scale(1.03);
+}
+
+.image-link:focus-visible {
+    outline: 3px solid #005fcc;
+    outline-offset: -3px;
+}
+
+.book-image {
     max-height: 218px;
     max-width: 100%;
     height: auto;
     width: auto;
+    transition: transform 0.18s ease;
 }
 
-/* X共有ボタン */
-.twitter-share {
+/* PC用: 画像上オーバーレイ */
+.image-share-button {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 40px;
-    height: 40px;
-    background: black;
-    border-radius: 50%;
+    top: 10px;
+    right: 10px;
+    width: 48px;
+    height: 48px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    z-index: 3;
+    touch-action: manipulation;
+}
+
+.image-share-button::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    background: #000;
+    border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease;
+}
+
+.image-share-button:hover::before,
+.image-share-button:focus-visible::before {
+    transform: scale(1.06);
+}
+
+.image-share-button:active::before {
+    transform: scale(0.96);
+}
+
+.image-share-button img {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+/* スマホ用: タイトル行の右側 */
+.card-header {
     display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.card-text {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.inline-share-button {
+    flex: 0 0 auto;
+    width: 48px;
+    height: 48px;
+    border: none;
+    background: #000;
+    color: #fff;
+    border-radius: 999px;
+    display: none;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    border: none;
     padding: 0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    transition: transform 0.2s;
+    touch-action: manipulation;
 }
 
-.twitter-share:hover,
-.twitter-share:focus-visible {
-    transform: scale(1.08);
+.inline-share-button img {
+    width: 22px;
+    height: 22px;
 }
 
-.twitter-share:focus-visible,
-.today-fab:focus-visible {
+.inline-share-button:hover,
+.inline-share-button:focus-visible {
+    transform: scale(1.06);
+}
+
+.inline-share-button:active {
+    transform: scale(0.96);
+}
+
+.image-share-button:focus-visible,
+.inline-share-button:focus-visible,
+.today-fab:focus-visible,
+.title:focus-visible,
+.author:focus-visible {
     outline: 3px solid #005fcc;
     outline-offset: 2px;
-}
-
-.twitter-share img {
-    width: 25px;
-    height: 25px;
 }
 
 .title,
@@ -207,13 +287,15 @@ body {
     display: block;
     text-decoration: none;
     color: inherit;
-    margin-top: 10px;
     font-size: 14px;
     font-weight: 600;
     line-height: 1.5;
+    min-width: 0;
+    word-break: break-word;
 }
 
 .author {
+    margin-top: 6px;
     font-size: 12px;
     color: #777;
 }
@@ -227,13 +309,13 @@ body {
 }
 
 .loader {
+    min-height: 80px;
     text-align: center;
     padding: 20px 20px 40px;
     color: #777;
     font-size: 14px;
 }
 
-/* 右下固定「今日へ戻る」 */
 .today-fab {
     position: fixed;
     right: 20px;
@@ -268,7 +350,6 @@ body {
     font-size: 12px;
 }
 
-/* モバイル */
 @media (max-width: 640px) {
     .container {
         margin-top: 18px;
@@ -295,6 +376,24 @@ body {
         width: 68px;
         height: 68px;
     }
+
+    .image-share-button {
+        display: none;
+    }
+
+    .inline-share-button {
+        display: inline-flex;
+    }
+}
+
+@media (min-width: 641px) {
+    .inline-share-button {
+        display: none;
+    }
+
+    .image-share-button {
+        display: block;
+    }
 }
 </style>
 </head>
@@ -310,7 +409,6 @@ body {
 <div class="container">
     <div id="top-sentinel" class="sentinel" aria-hidden="true"></div>
     <div id="book-container"></div>
-    <div id="bottom-sentinel" class="sentinel" aria-hidden="true"></div>
 </div>
 
 <div class="loader" id="loader" aria-live="polite">Loading...</div>
@@ -322,8 +420,8 @@ body {
 
 <script>
 const TODAY = "{{ today }}";
-let nextDate = TODAY;              // 未来方向の読み込み開始日
-let prevDate = "{{ yesterday }}";  // 過去方向の読み込み開始日
+let nextDate = TODAY;
+let prevDate = "{{ yesterday }}";
 let loadingNext = false;
 let loadingPrev = false;
 
@@ -339,14 +437,19 @@ function shareOnTwitter(text, url) {
     } else {
         window.open(
             `https://twitter.com/intent/tweet?text=${encodeURIComponent(body)}`,
-            "_blank"
+            "_blank",
+            "noopener,noreferrer"
         );
     }
 }
 
 document.body.addEventListener("click", (event) => {
-    const btn = event.target.closest(".twitter-share");
+    const btn = event.target.closest(".image-share-button, .inline-share-button");
     if (!btn) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
     const text = btn.dataset.text;
     const url = window.location.href;
     shareOnTwitter(text, url);
@@ -357,6 +460,21 @@ function formatDateLabel(dateStr) {
         return `📅 今日発売 (${dateStr})`;
     }
     return dateStr;
+}
+
+function createShareButton(className, titleText) {
+    const shareBtn = document.createElement("button");
+    shareBtn.className = className;
+    shareBtn.dataset.text = titleText;
+    shareBtn.type = "button";
+    shareBtn.setAttribute("aria-label", `${titleText} を X で共有`);
+
+    const logo = document.createElement("img");
+    logo.src = "/static/X-logo.svg";
+    logo.alt = "";
+    shareBtn.appendChild(logo);
+
+    return shareBtn;
 }
 
 function createSection(books, currentDate) {
@@ -379,7 +497,6 @@ function createSection(books, currentDate) {
     const title = document.createElement("div");
     title.className = "date-title";
     title.textContent = formatDateLabel(currentDate);
-
     inner.appendChild(title);
 
     if (isToday) {
@@ -393,31 +510,36 @@ function createSection(books, currentDate) {
     grid.className = "grid";
 
     books.forEach(book => {
+        const productUrl = `https://www.amazon.co.jp/dp/${book.asin}`;
+
         const card = document.createElement("article");
         card.className = "card";
 
         const imgWrapper = document.createElement("div");
         imgWrapper.className = "image-wrapper";
 
+        const imageLink = document.createElement("a");
+        imageLink.href = productUrl;
+        imageLink.target = "_blank";
+        imageLink.rel = "noopener noreferrer";
+        imageLink.className = "image-link";
+        imageLink.setAttribute("aria-label", `${book.title} の Amazon ページを開く`);
+
         const img = document.createElement("img");
         img.src = book.image;
         img.loading = "lazy";
         img.alt = `${book.title} の表紙`;
-        imgWrapper.appendChild(img);
+        img.className = "book-image";
+        imageLink.appendChild(img);
 
-        const shareBtn = document.createElement("button");
-        shareBtn.className = "twitter-share";
-        shareBtn.dataset.text = book.title;
-        shareBtn.type = "button";
-        shareBtn.setAttribute("aria-label", `${book.title} を X で共有`);
+        imgWrapper.appendChild(imageLink);
+        imgWrapper.appendChild(createShareButton("image-share-button", book.title));
 
-        const logo = document.createElement("img");
-        logo.src = "/static/X-logo.svg";
-        logo.alt = "";
-        shareBtn.appendChild(logo);
-        imgWrapper.appendChild(shareBtn);
+        const cardHeader = document.createElement("div");
+        cardHeader.className = "card-header";
 
-        const productUrl = `https://www.amazon.co.jp/dp/${book.asin}`;
+        const cardText = document.createElement("div");
+        cardText.className = "card-text";
 
         const titleLink = document.createElement("a");
         titleLink.href = productUrl;
@@ -433,9 +555,15 @@ function createSection(books, currentDate) {
         authorLink.textContent = book.author;
         authorLink.className = "author";
 
+        cardText.appendChild(titleLink);
+        cardText.appendChild(authorLink);
+
+        cardHeader.appendChild(cardText);
+        cardHeader.appendChild(createShareButton("inline-share-button", book.title));
+
         card.appendChild(imgWrapper);
-        card.appendChild(titleLink);
-        card.appendChild(authorLink);
+        card.appendChild(cardHeader);
+
         grid.appendChild(card);
     });
 
@@ -450,7 +578,6 @@ function appendBooks(books, currentDate, prepend = false) {
 
     const container = document.getElementById("book-container");
 
-    // 同じ日付を重複追加しない
     if (container.querySelector(`[data-date="${CSS.escape(currentDate)}"]`)) {
         return;
     }
@@ -509,7 +636,6 @@ async function loadPrev() {
         appendBooks(data.books, data.current_date, true);
         prevDate = data.next_date;
 
-        // prepend 時の視点ジャンプを補正
         const afterHeight = document.documentElement.scrollHeight;
         const delta = afterHeight - beforeHeight;
         window.scrollTo(0, beforeTop + delta);
@@ -549,7 +675,6 @@ document.getElementById("todayBtn").addEventListener("click", async () => {
     }
 });
 
-/* 上下端監視 */
 const observerNext = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting) {
         loadNext();
@@ -570,10 +695,9 @@ const observerPrev = new IntersectionObserver((entries) => {
     threshold: 0
 });
 
-observerNext.observe(document.getElementById("bottom-sentinel"));
+observerNext.observe(document.getElementById("loader"));
 observerPrev.observe(document.getElementById("top-sentinel"));
 
-/* 現在位置インジケータ */
 let visibleSections = new Map();
 let sectionObserver = null;
 
@@ -652,8 +776,8 @@ window.addEventListener("resize", () => {
 
 async function init() {
     setupSectionObserver();
-    await loadNext();         // まず今日を読み込む
-    await ensureScrollable(); // 画面に十分な量を表示
+    await loadNext();
+    await ensureScrollable();
     updateStatusByViewport();
 }
 
