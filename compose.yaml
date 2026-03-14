@@ -3,8 +3,7 @@ services:
     image: amazon_scrape
     logging:
       driver: syslog
-    environment:
-      TZ: Asia/Tokyo
+    user: "${UID:-1000}:${GID:-1000}"
     build:
       context: .
     volumes:
@@ -17,8 +16,7 @@ services:
     image: amazon_scrape
     logging:
       driver: syslog
-    environment:
-      TZ: Asia/Tokyo
+    user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - ./data:/app/data
       - ./html:/app/html
