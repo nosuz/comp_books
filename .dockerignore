@@ -6,4 +6,6 @@
 .codex/
 __pycache__/
 README.md
+Dockerfile
 compose.yaml
+data/

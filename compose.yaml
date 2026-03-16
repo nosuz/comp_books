@@ -1,11 +1,13 @@
 services:
   web:
-    image: amazon_scrape
+    image: amazon_scrape:latest
+    build:
+      context: .
     logging:
       driver: syslog
     user: "${UID:-1000}:${GID:-1000}"
-    build:
-      context: .
+    environment:
+      TZ: Asia/Tokyo
     volumes:
       - ./data:/app/data
     ports:
@@ -13,13 +15,15 @@ services:
     restart: unless-stopped
 
   batch:
-    image: amazon_scrape
+    image: amazon_scrape:latest
     logging:
       driver: syslog
     user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      TZ: Asia/Tokyo
     volumes:
       - ./data:/app/data
       - ./html:/app/html
-    entrypoint: ["uv", "run", "python"]
+    entrypoint: ["/opt/venv/bin/python"]
     command: ["/app/save_new_books.py"]
     restart: "no"
