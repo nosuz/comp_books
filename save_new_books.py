@@ -1,33 +1,12 @@
-# https://developers.google.com/workspace/sheets/api/quickstart/python?hl=ja
-# python3 -m pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+#!/usr/bin/env python3
 
-# サービスアカウントを作成
-#    「APIとサービス」→「認証情報」
-#    「認証情報を作成」→ サービスアカウント
-#    名前を入力（例：amazon-sheets-bot）
-#    ロールは空でOK（後からでも可）
-#    作成
-
-# JSONキーを作る（重要）
-#    作成したサービスアカウントをクリック
-#    「キー」タブ
-#    「鍵を追加」→「新しい鍵を作成」
-#    JSONを選択
-#    ダウンロード
-
-# 共有
-#    JSON内の "client_email" を確認
-#    スプレッドシートを開く
-#    右上の「共有」ボタンをクリック
-#    その "client_email" を追加
-
-import sys
 import datetime
 import sqlite3
 import datetime
+import time
 
 # 新刊情報を取得する
-from scrape_new_books import scrape_new_comp_books
+from scrape_new_books import scrape_new_comp_books, scrape_new_comp_magazines
 
 # 今日の日付
 today = datetime.date.today()
@@ -73,3 +52,8 @@ if __name__ == "__main__":
         for books in scrape_new_comp_books():
             # SQLiteに新刊情報を保存する。
             sqlite_insert(conn, books)
+
+        time.sleep(5)
+        for magazines in scrape_new_comp_magazines():
+            # SQLiteに新刊情報を保存する。
+            sqlite_insert(conn, magazines)
