@@ -2,7 +2,7 @@
   "name": "Python",
   "workspaceFolder": "/workspaces",
   // "init": true,
-  "remoteUser": "vscode",
+  "remoteUser": "ubuntu",
   "updateRemoteUserUID": true,
   // UID and GID is imported from .env file.
   "dockerComposeFile": "compose.yaml",
@@ -20,7 +20,7 @@
   "customizations": {
     "vscode": {
       "settings": {
-        "python.defaultInterpreterPath": "/home/vscode/venv/bin/python"
+        "python.defaultInterpreterPath": "/opt/venv/bin/python"
       },
       "extensions": [
         "mhutchie.git-graph",
