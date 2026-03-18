@@ -6,7 +6,7 @@ import datetime
 import time
 
 # 新刊情報を取得する
-from scrape_new_books import scrape_new_comp_books, scrape_new_comp_magazines
+from scrape_new_books import scrape_new_comp_books, scrape_new_comp_magazines, search_magazine
 
 # 今日の日付
 today = datetime.date.today()
@@ -55,5 +55,10 @@ if __name__ == "__main__":
 
         time.sleep(5)
         for magazines in scrape_new_comp_magazines():
+            # SQLiteに新刊情報を保存する。
+            sqlite_insert(conn, magazines)
+
+        time.sleep(5)
+        for magazines in search_magazine():
             # SQLiteに新刊情報を保存する。
             sqlite_insert(conn, magazines)
