@@ -39,23 +39,6 @@ def find_date_text_books(item):
     return zero_pad_slash_date(text)
 
 
-def find_date_text_magazines(item):
-    """
-    雑誌ページ用:
-    「この本の出版予定日はYYYY年M月D日です。」の定形文から取得
-    """
-    text = item.get_text(" ", strip=True)
-    m = re.search(
-        r"この本の出版予定日は\s*(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日\s*です",
-        text,
-    )
-    if not m:
-        return None
-
-    y, mth, d = m.groups()
-    return f"{int(y):04d}-{int(mth):02d}-{int(d):02d}"
-
-
 def extract_author_from_date_span(date_span):
     """
     元コードに近い形で、日付spanより前のテキストを著者として拾う
@@ -130,15 +113,11 @@ def parse_items(html, page_num, target):
             print(f"SKIP(Kindle or ペーパー): {title_text}")
             continue
 
-        if target == "books":
-            date_text = find_date_text_books(item)
-            date_span = item.find(
-                "span", class_="a-size-base a-color-secondary a-text-normal"
-            )
-            author_text = extract_author_from_date_span(date_span)
-        else:
-            date_text = find_date_text_magazines(item)
-            author_text = ""
+        date_text = find_date_text_books(item)
+        date_span = item.find(
+            "span", class_="a-size-base a-color-secondary a-text-normal"
+        )
+        author_text = extract_author_from_date_span(date_span)
 
         if not date_text:
             print(f"SKIP(日付なし): {title_text}")
