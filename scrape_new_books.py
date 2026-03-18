@@ -6,9 +6,12 @@ import time
 import re
 from bs4 import BeautifulSoup
 import requests
+from urllib.parse import quote
 
 BOOKS_URL = "https://www.amazon.co.jp/s?i=stripbooks&rh=n%3A466298%2Cp_n_publication_date%3A2285919051&s=date-asc-rank&dc&qid=1771997277&rnid=82836051&ref=sr_st_date-asc-rank&ds=v1%3ABCx%2FYdfUfZira6wYEePCPFeQKnWpeDaRQ13IzFF3Geg"
 MAGAZINES_URL = "https://www.amazon.co.jp/s?i=stripbooks&rh=n%3A46423011%2Cp_n_publication_date%3A2285539051&s=date-asc-rank&dc&qid=1773742766&rnid=82836051&ref=sr_st_date-asc-rank&ds=v1%3AVDRvoy00oEuRfLqBEHXj%2Byulxt2QJn%2Fy0Bp%2B2PJBrgc"
+
+MAGAZINES_SEARCH_URL = "https://www.amazon.co.jp/s?k={}&i=stripbooks&rh=n%3A13384021%2Cp_n_condition-type%3A680578011%2Cp_n_publication_date%3A2285541051%257C2315442051&dc&__mk_ja_JP=%E3%82%AB%E3%82%BF%E3%82%AB%E3%83%8A&qid=1773837894&rnid=82836051&ref=sr_nr_p_n_publication_date_5&ds=v1%3AvzpdbYdswykezZ9GL%2BFyFn6s9qeMmGXt0a%2FZaI8c1fA"
 
 MAGAZINES = ["I/O", "トランジスタ技術", "インターフェース"]
 
@@ -198,7 +201,8 @@ def scrape_new_comp_magazines():
 
 
 def make_magazine_search_url(keyword):
-    return f"https://www.amazon.co.jp/s?k={keyword}&i=stripbooks&rh=n%3A13384021%2Cp_n_condition-type%3A680578011%2Cp_n_publication_date%3A2285541051%257C2315442051&dc&__mk_ja_JP=%E3%82%AB%E3%82%BF%E3%82%AB%E3%83%8A&qid=1773837894&rnid=82836051&ref=sr_nr_p_n_publication_date_5&ds=v1%3AvzpdbYdswykezZ9GL%2BFyFn6s9qeMmGXt0a%2FZaI8c1fA"
+    encoded = quote(keyword, safe="")
+    return MAGAZINES_SEARCH_URL.format(encoded)
 
 
 def search_magazine():
