@@ -20,9 +20,9 @@ RUN --mount=type=cache,target=$UV_CACHE_DIR,sharing=locked \
     uv venv /opt/venv \
     && if [ -s uv.lock ]; then uv sync --frozen; fi
 
-COPY . .
-
 RUN chmod -R a+rX /opt/venv
+
+COPY . .
 
 ENTRYPOINT ["/opt/venv/bin/gunicorn", "app:app", \
     "--bind", "0.0.0.0:7000", \
