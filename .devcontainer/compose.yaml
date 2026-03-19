@@ -10,3 +10,5 @@ services:
     command: sleep infinity
     volumes:
       - ..:/workspaces
+    environment:
+      - AMAZON_AFFILIATE_TAG=postcardst-22

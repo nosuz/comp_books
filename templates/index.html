@@ -425,7 +425,16 @@ let prevDate = "{{ yesterday }}";
 let loadingNext = false;
 let loadingPrev = false;
 let nextLoadFailed = false;
+const IS_OWNER_HOST = {{ "true" if is_owner_host else "false" }};
+const AMAZON_AFFILIATE_TAG = "{{ amazon_affiliate_tag }}";
 
+function buildAmazonUrl(asin, withAffiliateTag = false) {
+    let url = `https://www.amazon.co.jp/dp/${encodeURIComponent(asin)}`;
+    if (withAffiliateTag && AMAZON_AFFILIATE_TAG) {
+        url += `/ref=nosim?tag=${encodeURIComponent(AMAZON_AFFILIATE_TAG)}`;
+    }
+    return url;
+}
 
 function isMobileOrTablet() {
     const ua = navigator.userAgent.toLowerCase();
@@ -453,7 +462,7 @@ document.body.addEventListener("click", (event) => {
     event.stopPropagation();
 
     const text = btn.dataset.text;
-    const url = window.location.href;
+    const url = btn.dataset.url;
     shareOnTwitter(text, url);
 });
 
@@ -464,10 +473,11 @@ function formatDateLabel(dateStr) {
     return dateStr;
 }
 
-function createShareButton(className, titleText) {
+function createShareButton(className, titleText, shareUrl) {
     const shareBtn = document.createElement("button");
     shareBtn.className = className;
     shareBtn.dataset.text = titleText;
+    shareBtn.dataset.url = shareUrl;
     shareBtn.type = "button";
     shareBtn.setAttribute("aria-label", `${titleText} を X で共有`);
 
@@ -512,7 +522,8 @@ function createSection(books, currentDate) {
     grid.className = "grid";
 
     books.forEach(book => {
-        const productUrl = `https://www.amazon.co.jp/dp/${book.asin}`;
+    const productUrl = buildAmazonUrl(book.asin, !IS_OWNER_HOST);
+    const shareUrl = buildAmazonUrl(book.asin, IS_OWNER_HOST);
 
         const card = document.createElement("article");
         card.className = "card";
@@ -535,7 +546,7 @@ function createSection(books, currentDate) {
         imageLink.appendChild(img);
 
         imgWrapper.appendChild(imageLink);
-        imgWrapper.appendChild(createShareButton("image-share-button", book.title));
+    imgWrapper.appendChild(createShareButton("image-share-button", book.title, shareUrl));
 
         const cardHeader = document.createElement("div");
         cardHeader.className = "card-header";
@@ -561,7 +572,7 @@ function createSection(books, currentDate) {
         cardText.appendChild(authorLink);
 
         cardHeader.appendChild(cardText);
-        cardHeader.appendChild(createShareButton("inline-share-button", book.title));
+    cardHeader.appendChild(createShareButton("inline-share-button", book.title, shareUrl));
 
         card.appendChild(imgWrapper);
         card.appendChild(cardHeader);

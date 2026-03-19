@@ -8,6 +8,7 @@ services:
     user: "${UID:-1000}:${GID:-1000}"
     environment:
       TZ: Asia/Tokyo
+      AMAZON_AFFILIATE_TAG: postcardst-22
     volumes:
       - ./data:/app/data
     ports:

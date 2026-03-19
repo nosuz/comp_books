@@ -6,6 +6,12 @@ import datetime
 
 app = Flask(__name__)
 
+OWNER_HOSTS = {
+    "my.compbooks.jp",
+    "my.compbooks.test",
+    "127.0.0.1:5000",
+}
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "data/amazon.db")
 
@@ -21,10 +27,17 @@ def index():
     today = datetime.date.today()
     today_str = today.isoformat()
     yesterday_str = (today - datetime.timedelta(days=1)).isoformat()
+
+    host = request.headers.get("Host", "")
+    is_owner_host = host in OWNER_HOSTS
+    amazon_affiliate_tag = os.environ.get("AMAZON_AFFILIATE_TAG", "")
+
     return render_template(
         "index.html",
         today=today_str,
         yesterday=yesterday_str,
+        is_owner_host=is_owner_host,
+        amazon_affiliate_tag=amazon_affiliate_tag,
     )
 
 
