@@ -424,6 +424,8 @@ let nextDate = TODAY;
 let prevDate = "{{ yesterday }}";
 let loadingNext = false;
 let loadingPrev = false;
+let nextLoadFailed = false;
+
 
 function isMobileOrTablet() {
     const ua = navigator.userAgent.toLowerCase();
@@ -603,22 +605,28 @@ async function fetchBooks(date, direction) {
 }
 
 async function loadNext() {
-    if (!nextDate || loadingNext) return;
+    const loader = document.getElementById("loader");
+    if (!nextDate || loadingNext || nextLoadFailed) return;
 
     loadingNext = true;
+    loader.innerText = "Loading...";
+
     try {
         const data = await fetchBooks(nextDate, "next");
         appendBooks(data.books, data.current_date, false);
         nextDate = data.next_date;
 
         if (!nextDate) {
-            document.getElementById("loader").innerText = "これより先の発売予定はありません";
+            loader.innerText = "これより先の発売予定はありません";
+            observerNext.unobserve(loader);
         } else {
-            document.getElementById("loader").innerText = "Loading...";
+            loader.innerText = "Loading...";
         }
     } catch (err) {
         console.error("Error loading next books:", err);
-        document.getElementById("loader").innerText = "未来方向の読み込みに失敗しました";
+        nextLoadFailed = true;
+        loader.innerText = "未来方向の読み込みに失敗しました";
+        observerNext.unobserve(loader);
     } finally {
         loadingNext = false;
     }
@@ -647,7 +655,7 @@ async function loadPrev() {
 }
 
 async function ensureScrollable() {
-    while (document.body.scrollHeight <= window.innerHeight && nextDate) {
+    while (document.body.scrollHeight <= window.innerHeight && nextDate && !nextLoadFailed) {
         await loadNext();
     }
 }
@@ -676,7 +684,7 @@ document.getElementById("todayBtn").addEventListener("click", async () => {
 });
 
 const observerNext = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
+    if (entries[0].isIntersecting && !nextLoadFailed) {
         loadNext();
     }
 }, {
