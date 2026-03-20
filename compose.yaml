@@ -15,7 +15,7 @@ services:
       - "7000:7000"
     restart: unless-stopped
 
-  batch:
+  update:
     image: amazon_scrape:latest
     logging:
       driver: syslog
