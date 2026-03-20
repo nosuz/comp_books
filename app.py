@@ -7,9 +7,7 @@ import datetime
 app = Flask(__name__)
 
 OWNER_HOSTS = {
-    "my.compbooks.jp",
-    "my.compbooks.test",
-    "127.0.0.1:5000",
+    "my.comp-books.jp",
 }
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
