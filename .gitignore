@@ -2,3 +2,5 @@ __pycache__/
 data/
 html/
 *.log
+*.tar
+*.tgz

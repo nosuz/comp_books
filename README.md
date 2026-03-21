@@ -9,7 +9,9 @@
 mkdir data html
 ```
 
-## Build Container
+## Container
+
+### Build Container
 
 ```bash
 docker compose build
@@ -17,22 +19,22 @@ docker compose build
 # docker compose up -d --build
 ```
 
-## Start Web container
+### Start Web container
 
 ```bash
 docker compose up -d web
 ```
 
-## Stop Web container
+### Stop Web container
 
 ```bash
 docker compose down web
 ```
 
-## Start batch job
+### Start scraping
 
 ```bash
-docker compose run --rm batch
+docker compose run --rm update
 ```
 
 ## Transfer Docker Image
@@ -40,26 +42,31 @@ docker compose run --rm batch
 ### extract image
 
 ```bash
-docker save amazon_scrape:latest -o app.tar
-tar zcvf ~/pskreporter_image.tgz app.tar compose.yaml README.md
+docker save amazon_scrape:latest -o amazon_scrape.tar
+tar cvf amazon_scrape_image.tar amazon_scrape.tar compose.yaml README.md
 ```
 
 ### transfer image
 
 ```bash
-scp pskreporter.tar user@server:/tmp/
+scp amazon_scrape_image.tar user@server:/tmp/
 ```
 
 ### install image
 
 ```bash
-docker load -i pskreporter.tar
+mkdir amazon_scrape
+cd amazon_scrape
+mkdir data html
+
+tar xf /tmp/amazon_scrape_image.tar
+docker load -i amazon_scrape.tar
 ```
 
 ## start image
 
 ```bash
-docker compose up -d
+docker compose up -d web
 ```
 
 `-d`が無いとフォアグラウンドで実行される。
