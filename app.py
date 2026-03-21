@@ -7,6 +7,7 @@ import datetime
 app = Flask(__name__)
 
 OWNER_HOSTS = {
+    "my.comp-books.com",
     "my.comp-books.jp",
 }
 
