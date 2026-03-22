@@ -52,29 +52,22 @@ def api_books():
         target_date = datetime.date.today().isoformat()
 
     direction = request.args.get("direction", "next")  # next=未来、prev=過去
+    if direction not in {"next", "prev"}:
+        return jsonify({"error": "Invalid direction"}), 400
 
     conn = get_db()
     cur = conn.cursor()
 
-    # 1. ターゲット日のデータ取得
-    cur.execute(
-        """
-        SELECT title, author, image, date, asin
-        FROM books
-        WHERE date = ?
-        ORDER BY title
-        """,
-        (target_date,),
-    )
-    books = [dict(r) for r in cur.fetchall()]
-
-    # 2. 次に読み込む日付を取得
+    # まず「今回返すべき日付」を決める
+    # next: 指定日以降で最も近い日付
+    # prev: 指定日以前で最も近い日付
     if direction == "prev":
         cur.execute(
             """
-            SELECT DISTINCT date
+            SELECT date
             FROM books
-            WHERE date < ?
+            WHERE date <= ?
+            GROUP BY date
             ORDER BY date DESC
             LIMIT 1
             """,
@@ -83,13 +76,67 @@ def api_books():
     else:
         cur.execute(
             """
-            SELECT DISTINCT date
+            SELECT date
             FROM books
-            WHERE date > ?
+            WHERE date >= ?
+            GROUP BY date
             ORDER BY date ASC
             LIMIT 1
             """,
             (target_date,),
+        )
+
+    current_row = cur.fetchone()
+    if not current_row:
+        conn.close()
+        return jsonify(
+            {
+                "books": [],
+                "current_date": target_date,
+                "next_date": None,
+            }
+        )
+
+    current_date = current_row["date"]
+
+    # その日付の本を返す
+    cur.execute(
+        """
+        SELECT title, author, image, date, asin
+        FROM books
+        WHERE date = ?
+        ORDER BY title
+        """,
+        (current_date,),
+    )
+    books = [dict(r) for r in cur.fetchall()]
+
+    # 次に読み込むべき日付を返す
+    # prev: 今回返した日付より前
+    # next: 今回返した日付より後
+    if direction == "prev":
+        cur.execute(
+            """
+            SELECT date
+            FROM books
+            WHERE date < ?
+            GROUP BY date
+            ORDER BY date DESC
+            LIMIT 1
+            """,
+            (current_date,),
+        )
+    else:
+        cur.execute(
+            """
+            SELECT date
+            FROM books
+            WHERE date > ?
+            GROUP BY date
+            ORDER BY date ASC
+            LIMIT 1
+            """,
+            (current_date,),
         )
 
     next_row = cur.fetchone()
@@ -100,7 +147,7 @@ def api_books():
     return jsonify(
         {
             "books": books,
-            "current_date": target_date,
+            "current_date": current_date,
             "next_date": next_date,
         }
     )
