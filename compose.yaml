@@ -1,6 +1,6 @@
 services:
   web:
-    image: amazon_scrape:latest
+    image: comp_books:latest
     build:
       context: .
     logging:
@@ -14,17 +14,3 @@ services:
     ports:
       - "7000:7000"
     restart: unless-stopped
-
-  update:
-    image: amazon_scrape:latest
-    logging:
-      driver: syslog
-    user: "${UID:-1000}:${GID:-1000}"
-    environment:
-      TZ: Asia/Tokyo
-    volumes:
-      - ./data:/app/data
-      - ./html:/app/html
-    entrypoint: ["/opt/venv/bin/python"]
-    command: ["/app/save_new_books.py"]
-    restart: "no"

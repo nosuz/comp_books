@@ -1,4 +1,4 @@
-## Amazon scraper
+## Amazon Comp Books
 
 ## Required folders
 
@@ -22,19 +22,13 @@ docker compose build
 ### Start Web container
 
 ```bash
-docker compose up -d web
+docker compose up -d
 ```
 
 ### Stop Web container
 
 ```bash
-docker compose down web
-```
-
-### Start scraping
-
-```bash
-docker compose run --rm update
+docker compose down
 ```
 
 ## Transfer Docker Image
@@ -42,31 +36,31 @@ docker compose run --rm update
 ### extract image
 
 ```bash
-docker save amazon_scrape:latest -o amazon_scrape.tar
-tar cvf amazon_scrape_image.tar amazon_scrape.tar compose.yaml README.md
+docker save comp_books:latest -o comp_books.tar
+tar cvf comp_books_image.tar comp_books.tar compose.yaml README.md
 ```
 
 ### transfer image
 
 ```bash
-scp amazon_scrape_image.tar user@server:/tmp/
+scp comp_books_image.tar user@server:/tmp/
 ```
 
 ### install image
 
 ```bash
-mkdir amazon_scrape
-cd amazon_scrape
+mkdir comp_books
+cd comp_books
 mkdir data html
 
-tar xf /tmp/amazon_scrape_image.tar
-docker load -i amazon_scrape.tar
+tar xf /tmp/comp_books_image.tar
+docker load -i comp_books.tar
 ```
 
 ## start image
 
 ```bash
-docker compose up -d web
+docker compose up -d
 ```
 
 `-d`が無いとフォアグラウンドで実行される。
