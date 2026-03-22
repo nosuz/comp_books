@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, request
 import sqlite3
 import os
 import datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 app = Flask(__name__)
@@ -21,9 +22,19 @@ def get_db():
     return conn
 
 
+def get_today_from_tz_env() -> datetime.date:
+    tz_name = os.environ.get("TZ")
+    if tz_name:
+        try:
+            return datetime.datetime.now(ZoneInfo(tz_name)).date()
+        except ZoneInfoNotFoundError:
+            pass
+    return datetime.date.today()
+
+
 @app.route("/")
 def index():
-    today = datetime.date.today()
+    today = get_today_from_tz_env()
     today_str = today.isoformat()
     yesterday_str = (today - datetime.timedelta(days=1)).isoformat()
 
@@ -49,7 +60,7 @@ def api_books():
         except ValueError:
             return jsonify({"error": "Invalid date format"}), 400
     else:
-        target_date = datetime.date.today().isoformat()
+        target_date = get_today_from_tz_env().isoformat()
 
     direction = request.args.get("direction", "next")  # next=未来、prev=過去
     if direction not in {"next", "prev"}:
@@ -61,6 +72,7 @@ def api_books():
     # まず「今回返すべき日付」を決める
     # next: 指定日以降で最も近い日付
     # prev: 指定日以前で最も近い日付
+    # 指定日そのものに本が無ければ、該当方向で最初に本が存在する日付を返す。
     if direction == "prev":
         cur.execute(
             """
