@@ -437,6 +437,8 @@ let prevDate = "{{ yesterday }}";
 let loadingNext = false;
 let loadingPrev = false;
 let nextLoadFailed = false;
+let lastFutureRefreshAt = 0;
+const FUTURE_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000;
 const IS_OWNER_HOST = {{ "true" if is_owner_host else "false" }};
 const AMAZON_AFFILIATE_TAG = "{{ amazon_affiliate_tag }}";
 
@@ -692,6 +694,97 @@ async function ensureScrollable() {
     }
 }
 
+function getSectionsFromToday() {
+    const today = getCurrentDateString();
+    return [...document.querySelectorAll(".date-section")].filter(section => {
+        const date = section.dataset.date || "";
+        return date >= today;
+    });
+}
+
+function clearSectionsFromToday() {
+    const sections = getSectionsFromToday();
+    for (const section of sections) {
+        if (sectionObserver) {
+            sectionObserver.unobserve(section);
+        }
+        visibleSections.delete(section.dataset.date);
+        section.remove();
+    }
+}
+
+function getViewportAnchor() {
+    const sections = [...document.querySelectorAll(".date-section")];
+    if (!sections.length) return null;
+
+    let current = null;
+    if (visibleSections.size > 0) {
+        const visible = [...visibleSections.values()].sort((a, b) => Math.abs(a.top) - Math.abs(b.top));
+        current = visible[0]?.element || null;
+    }
+
+    if (!current) {
+        current = sections.find(sec => sec.getBoundingClientRect().top >= 0) || sections[sections.length - 1];
+    }
+
+    if (!current) return null;
+
+    return {
+        date: current.dataset.date || "",
+        offset: current.getBoundingClientRect().top,
+    };
+}
+
+function restoreViewportAnchor(anchor) {
+    if (!anchor || !anchor.date) return;
+
+    const target = document.querySelector(`[data-date="${CSS.escape(anchor.date)}"]`) || document.getElementById("today-section");
+    if (!target) return;
+
+    const top = window.scrollY + target.getBoundingClientRect().top - anchor.offset;
+    window.scrollTo({ top, behavior: "auto" });
+}
+
+async function reloadFutureSections(anchor = null) {
+    const loader = document.getElementById("loader");
+    const today = getCurrentDateString();
+    const targetDate = anchor?.date || "";
+
+    clearSectionsFromToday();
+    nextDate = today;
+    nextLoadFailed = false;
+    loader.innerText = "Loading...";
+    observerNext.observe(loader);
+
+    await loadNext();
+    await ensureScrollable();
+
+    while (
+        targetDate &&
+        targetDate >= today &&
+        !document.querySelector(`[data-date="${CSS.escape(targetDate)}"]`) &&
+        nextDate &&
+        !nextLoadFailed
+    ) {
+        await loadNext();
+    }
+
+    restoreViewportAnchor(anchor);
+    updateStatusByViewport();
+}
+
+async function refreshFutureSectionsIfNeeded(force = false) {
+    const now = Date.now();
+    if (!force && now - lastFutureRefreshAt < FUTURE_REFRESH_INTERVAL_MS) {
+        return false;
+    }
+
+    const anchor = getViewportAnchor();
+    await reloadFutureSections(anchor);
+    lastFutureRefreshAt = now;
+    return true;
+}
+
 async function ensureTodayVisible() {
     const today = getCurrentDateString();
     let el = document.getElementById("today-section");
@@ -755,6 +848,8 @@ async function ensureTodayVisible() {
 }
 
 document.getElementById("todayBtn").addEventListener("click", async () => {
+    await refreshFutureSectionsIfNeeded(true);
+
     const today = getCurrentDateString();
     let el = document.getElementById("today-section");
 
@@ -868,10 +963,19 @@ window.addEventListener("resize", () => {
     updateStatusByViewport();
 });
 
+document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState !== "visible") {
+        return;
+    }
+
+    await refreshFutureSectionsIfNeeded(false);
+});
+
 async function init() {
     setupSectionObserver();
     await loadNext();
     await ensureScrollable();
+    lastFutureRefreshAt = Date.now();
     updateStatusByViewport();
 }
 
