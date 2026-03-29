@@ -46,6 +46,7 @@ def index():
         "index.html",
         today=today_str,
         yesterday=yesterday_str,
+        timezone_name=os.environ.get("TZ", "Asia/Tokyo"),
         is_owner_host=is_owner_host,
         amazon_affiliate_tag=amazon_affiliate_tag,
     )

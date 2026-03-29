@@ -430,14 +430,24 @@ body {
 </button>
 
 <script>
-const TODAY = "{{ today }}";
-let nextDate = TODAY;
+const INITIAL_TODAY = "{{ today }}";
+const TIMEZONE_NAME = "{{ timezone_name }}";
+let nextDate = INITIAL_TODAY;
 let prevDate = "{{ yesterday }}";
 let loadingNext = false;
 let loadingPrev = false;
 let nextLoadFailed = false;
 const IS_OWNER_HOST = {{ "true" if is_owner_host else "false" }};
 const AMAZON_AFFILIATE_TAG = "{{ amazon_affiliate_tag }}";
+
+function getCurrentDateString() {
+    return new Intl.DateTimeFormat("en-CA", {
+        timeZone: TIMEZONE_NAME,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).format(new Date());
+}
 
 function buildAmazonUrl(asin, withAffiliateTag = false) {
     let url = `https://www.amazon.co.jp/dp/${encodeURIComponent(asin)}`;
@@ -478,7 +488,7 @@ document.body.addEventListener("click", (event) => {
 });
 
 function formatDateLabel(dateStr) {
-    if (dateStr === TODAY) {
+    if (dateStr === getCurrentDateString()) {
         return `📅 今日発売 (${dateStr})`;
     }
     return dateStr;
@@ -505,7 +515,7 @@ function createSection(books, currentDate) {
     section.className = "date-section";
     section.dataset.date = currentDate;
 
-    const isToday = currentDate === TODAY;
+    const isToday = currentDate === getCurrentDateString();
     if (isToday) {
         section.classList.add("is-today");
         section.id = "today-section";
@@ -683,11 +693,61 @@ async function ensureScrollable() {
 }
 
 async function ensureTodayVisible() {
-    const todaySection = document.getElementById("today-section");
-    if (!todaySection) {
-        await loadNext();
+    const today = getCurrentDateString();
+    let el = document.getElementById("today-section");
+
+    if (el && el.dataset.date === today) {
+        el.scrollIntoView({ behavior: "auto", block: "start" });
+        updateStatusByViewport();
+        return;
     }
-    const el = document.getElementById("today-section");
+
+    if (el && el.dataset.date !== today) {
+        el.removeAttribute("id");
+        el.classList.remove("is-today");
+        el.setAttribute("aria-label", `${el.dataset.date} 発売`);
+        const oldSubtitle = el.querySelector(".date-subtitle");
+        if (oldSubtitle) {
+            oldSubtitle.remove();
+        }
+        const oldTitle = el.querySelector(".date-title");
+        if (oldTitle) {
+            oldTitle.textContent = formatDateLabel(el.dataset.date);
+        }
+    }
+
+    const existingSection = document.querySelector(`[data-date="${CSS.escape(today)}"]`);
+    if (existingSection) {
+        existingSection.id = "today-section";
+        existingSection.classList.add("is-today");
+        existingSection.setAttribute("aria-label", `今日発売 ${today}`);
+
+        const title = existingSection.querySelector(".date-title");
+        if (title) {
+            title.textContent = formatDateLabel(today);
+        }
+
+        if (!existingSection.querySelector(".date-subtitle")) {
+            const subtitle = document.createElement("div");
+            subtitle.className = "date-subtitle";
+            subtitle.textContent = "ここが今日発売の本です。右下の「今日」ボタンでいつでもこの位置へ戻れます。";
+            const inner = existingSection.querySelector(".date-section-inner");
+            const grid = existingSection.querySelector(".grid");
+            if (inner && grid) {
+                inner.insertBefore(subtitle, grid);
+            }
+        }
+
+        existingSection.scrollIntoView({ behavior: "auto", block: "start" });
+        updateStatusByViewport();
+        return;
+    }
+
+    const data = await fetchBooks(today, "next");
+    appendBooks(data.books, data.current_date, false);
+    nextDate = data.next_date;
+
+    el = document.getElementById("today-section");
     if (el) {
         el.scrollIntoView({ behavior: "auto", block: "start" });
     }
@@ -695,8 +755,10 @@ async function ensureTodayVisible() {
 }
 
 document.getElementById("todayBtn").addEventListener("click", async () => {
+    const today = getCurrentDateString();
     let el = document.getElementById("today-section");
-    if (!el) {
+
+    if (!el || el.dataset.date !== today) {
         await ensureTodayVisible();
         el = document.getElementById("today-section");
     }
@@ -764,10 +826,12 @@ function updateStatusByViewport() {
         return;
     }
 
-    if (currentDate === TODAY) {
+    const today = getCurrentDateString();
+
+    if (currentDate === today) {
         statusBadge.textContent = "📅 今日";
         statusText.textContent = `現在位置: 今日発売 (${currentDate})`;
-    } else if (currentDate < TODAY) {
+    } else if (currentDate < today) {
         statusBadge.textContent = "← 過去";
         statusText.textContent = `現在位置: ${currentDate} 発売（過去）`;
     } else {
