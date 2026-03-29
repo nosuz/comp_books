@@ -1,0 +1,19 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="16" height="16" rx="2" fill="#ffffff"/>
+
+  <!-- 背表紙 -->
+  <rect x="0.8" y="1" width="3.6" height="14" rx="1.5" fill="#2f6fb2"/>
+
+  <!-- 表紙 -->
+  <rect x="3.8" y="1" width="11.4" height="14" rx="1.5" fill="#4A90E2"/>
+
+  <!-- ページ -->
+  <rect x="14.2" y="2" width="1" height="12" fill="#ffffff"/>
+
+  <!-- ページ影 -->
+  <rect x="13.5" y="2" width="0.5" height="12" fill="#eaf2fb"/>
+
+  <!-- ハイライト -->
+  <rect x="4.5" y="1.5" width="9" height="2" fill="#ffffff" opacity="0.18"/>
+</svg>
