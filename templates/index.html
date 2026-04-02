@@ -558,8 +558,8 @@ function createSection(books, currentDate) {
     grid.className = "grid";
 
     books.forEach(book => {
-    const productUrl = buildAmazonUrl(book.asin, !IS_OWNER_HOST);
-    const shareUrl = buildAmazonUrl(book.asin, IS_OWNER_HOST);
+        const productUrl = buildAmazonUrl(book.asin, !IS_OWNER_HOST);
+        const shareUrl = buildAmazonUrl(book.asin, IS_OWNER_HOST);
 
         const card = document.createElement("article");
         card.className = "card";
@@ -582,7 +582,7 @@ function createSection(books, currentDate) {
         imageLink.appendChild(img);
 
         imgWrapper.appendChild(imageLink);
-    imgWrapper.appendChild(createShareButton("image-share-button", book.title, shareUrl));
+        imgWrapper.appendChild(createShareButton("image-share-button", book.title, shareUrl));
 
         const cardHeader = document.createElement("div");
         cardHeader.className = "card-header";
@@ -608,7 +608,7 @@ function createSection(books, currentDate) {
         cardText.appendChild(authorLink);
 
         cardHeader.appendChild(cardText);
-    cardHeader.appendChild(createShareButton("inline-share-button", book.title, shareUrl));
+        cardHeader.appendChild(createShareButton("inline-share-button", book.title, shareUrl));
 
         card.appendChild(imgWrapper);
         card.appendChild(cardHeader);
@@ -653,12 +653,13 @@ async function fetchBooks(date, direction) {
 
 async function loadNext() {
     const loader = document.getElementById("loader");
-    if (!nextDate || loadingNext || nextLoadFailed) return;
+    if (!nextDate || loadingNext || nextLoadFailed) return false;
 
     loadingNext = true;
     loader.innerText = "Loading...";
 
     try {
+        const requestedDate = nextDate;
         const data = await fetchBooks(nextDate, "next");
         appendBooks(data.books, data.current_date, false);
         nextDate = data.next_date;
@@ -669,11 +670,14 @@ async function loadNext() {
         } else {
             loader.innerText = "Loading...";
         }
+
+        return requestedDate !== nextDate || !!data.books.length;
     } catch (err) {
         console.error("Error loading next books:", err);
         nextLoadFailed = true;
         loader.innerText = "未来方向の読み込みに失敗しました";
         observerNext.unobserve(loader);
+        return false;
     } finally {
         loadingNext = false;
     }
@@ -703,7 +707,10 @@ async function loadPrev() {
 
 async function ensureScrollable() {
     while (document.body.scrollHeight <= window.innerHeight && nextDate && !nextLoadFailed) {
-        await loadNext();
+        const progressed = await loadNext();
+        if (!progressed) {
+            break;
+        }
     }
 }
 
@@ -758,6 +765,26 @@ function restoreViewportAnchor(anchor) {
     window.scrollTo({ top, behavior: "auto" });
 }
 
+function isLoaderNearViewport() {
+    const loader = document.getElementById("loader");
+    const rect = loader.getBoundingClientRect();
+    return rect.top <= window.innerHeight + 200;
+}
+
+async function fillFutureUntilLoaderLeavesViewport(maxSteps = 20) {
+    let steps = 0;
+
+    while (nextDate && !nextLoadFailed && isLoaderNearViewport() && steps < maxSteps) {
+        const beforeNextDate = nextDate;
+        const progressed = await loadNext();
+        steps += 1;
+
+        if (!progressed || beforeNextDate === nextDate) {
+            break;
+        }
+    }
+}
+
 async function reloadFutureSections(anchor = null) {
     const loader = document.getElementById("loader");
     const today = getCurrentDateString();
@@ -767,10 +794,11 @@ async function reloadFutureSections(anchor = null) {
     nextDate = today;
     nextLoadFailed = false;
     loader.innerText = "Loading...";
+
+    observerNext.unobserve(loader);
     observerNext.observe(loader);
 
     await loadNext();
-    await ensureScrollable();
 
     while (
         targetDate &&
@@ -779,10 +807,14 @@ async function reloadFutureSections(anchor = null) {
         nextDate &&
         !nextLoadFailed
     ) {
-        await loadNext();
+        const progressed = await loadNext();
+        if (!progressed) {
+            break;
+        }
     }
 
     restoreViewportAnchor(anchor);
+    await fillFutureUntilLoaderLeavesViewport();
     updateStatusByViewport();
 }
 
@@ -845,6 +877,7 @@ async function ensureTodayVisible() {
         }
 
         existingSection.scrollIntoView({ behavior: "auto", block: "start" });
+        await fillFutureUntilLoaderLeavesViewport();
         updateStatusByViewport();
         return;
     }
@@ -857,6 +890,8 @@ async function ensureTodayVisible() {
     if (el) {
         el.scrollIntoView({ behavior: "auto", block: "start" });
     }
+
+    await fillFutureUntilLoaderLeavesViewport();
     updateStatusByViewport();
 }
 
@@ -870,9 +905,12 @@ document.getElementById("todayBtn").addEventListener("click", async () => {
         await ensureTodayVisible();
         el = document.getElementById("today-section");
     }
+
     if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+
+    await fillFutureUntilLoaderLeavesViewport();
 });
 
 const observerNext = new IntersectionObserver((entries) => {
@@ -988,6 +1026,7 @@ async function init() {
     setupSectionObserver();
     await loadNext();
     await ensureScrollable();
+    await fillFutureUntilLoaderLeavesViewport();
     lastFutureRefreshAt = Date.now();
     updateStatusByViewport();
 }
