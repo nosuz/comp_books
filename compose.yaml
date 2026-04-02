@@ -10,8 +10,8 @@ services:
       TZ: Asia/Tokyo
       AMAZON_AFFILIATE_TAG: postcardst-22
     volumes:
-      - ./data:/app/data
-      - ./ogp:/app/ogp
+      - ../amazon_scrape/data:/app/data
+      - ../amazon_scrape/ogp:/app/ogp
     ports:
       - "7000:7000"
     restart: unless-stopped
