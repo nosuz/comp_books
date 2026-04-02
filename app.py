@@ -54,7 +54,17 @@ def ogp_file(filename):
 
 @app.route("/")
 def index():
-    today = get_today_from_tz_env()
+    req_date = request.args.get("date")
+
+    if req_date:
+        try:
+            # YYYYMMDD → YYYY-MM-DD に変換
+            parsed = datetime.datetime.strptime(req_date, "%Y%m%d").date()
+            today = parsed
+        except ValueError:
+            today = get_today_from_tz_env()
+    else:
+        today = get_today_from_tz_env()
     today_str = today.isoformat()
     yesterday_str = (today - datetime.timedelta(days=1)).isoformat()
 
