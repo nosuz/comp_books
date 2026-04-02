@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory, abort
 import sqlite3
 import os
 import datetime
@@ -13,7 +13,8 @@ OWNER_HOSTS = {
 }
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "data/amazon.db")
+DB_PATH = os.path.join(BASE_DIR, "data", "amazon.db")
+OGP_DIR = os.path.join(BASE_DIR, "ogp")
 
 
 def get_db():
@@ -44,6 +45,13 @@ def get_public_base_url() -> str:
     return f"{scheme}://{host}"
 
 
+@app.route("/ogp/<path:filename>")
+def ogp_file(filename):
+    if not filename.lower().endswith(".png"):
+        abort(404)
+    return send_from_directory(OGP_DIR, filename)
+
+
 @app.route("/")
 def index():
     today = get_today_from_tz_env()
@@ -55,7 +63,7 @@ def index():
     amazon_affiliate_tag = os.environ.get("AMAZON_AFFILIATE_TAG", "")
 
     base_url = get_public_base_url()
-    ogp_image_url = f"{base_url}/static/ogp/{today_str}.png"
+    ogp_image_url = f"{base_url}/ogp/{today_str}.png"
     og_title = f"{today_str} の新刊 | Books"
     og_description = "今日発売のコンピュータ書籍の一覧"
 

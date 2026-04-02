@@ -11,6 +11,7 @@ services:
       AMAZON_AFFILIATE_TAG: postcardst-22
     volumes:
       - ./data:/app/data
+      - ./ogp:/app/ogp
     ports:
       - "7000:7000"
     restart: unless-stopped
