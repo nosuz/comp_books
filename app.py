@@ -32,6 +32,18 @@ def get_today_from_tz_env() -> datetime.date:
     return datetime.date.today()
 
 
+def get_public_base_url() -> str:
+    # 必要なら環境変数で固定URLを与える
+    # 例: https://comp-books.com
+    base_url = os.environ.get("PUBLIC_BASE_URL", "").strip()
+    if base_url:
+        return base_url.rstrip("/")
+
+    scheme = request.headers.get("X-Forwarded-Proto", request.scheme)
+    host = request.headers.get("Host", "")
+    return f"{scheme}://{host}"
+
+
 @app.route("/")
 def index():
     today = get_today_from_tz_env()
@@ -42,6 +54,11 @@ def index():
     is_owner_host = host in OWNER_HOSTS
     amazon_affiliate_tag = os.environ.get("AMAZON_AFFILIATE_TAG", "")
 
+    base_url = get_public_base_url()
+    ogp_image_url = f"{base_url}/static/ogp/{today_str}.png"
+    og_title = f"{today_str} の新刊 | Books"
+    og_description = "今日発売のコンピュータ書籍の一覧"
+
     return render_template(
         "index.html",
         today=today_str,
@@ -49,6 +66,9 @@ def index():
         timezone_name=os.environ.get("TZ", "Asia/Tokyo"),
         is_owner_host=is_owner_host,
         amazon_affiliate_tag=amazon_affiliate_tag,
+        ogp_image_url=ogp_image_url,
+        og_title=og_title,
+        og_description=og_description,
     )
 
 
