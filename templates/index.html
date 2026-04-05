@@ -28,6 +28,7 @@
 <meta name="twitter:title" content="{{ og_title }}">
 <meta name="twitter:description" content="{{ og_description }}">
 <meta name="twitter:image" content="{{ ogp_image_url }}">
+
 <style>
 :root {
     --bg: #f5f7fa;
@@ -209,7 +210,6 @@ body {
     transition: transform 0.18s ease;
 }
 
-/* PC用: 画像上オーバーレイ */
 .image-share-button {
     position: absolute;
     top: 10px;
@@ -253,7 +253,6 @@ body {
     z-index: 1;
 }
 
-/* スマホ用: タイトル行の右側 */
 .card-header {
     display: flex;
     align-items: flex-start;
@@ -451,7 +450,9 @@ let loadingNext = false;
 let loadingPrev = false;
 let nextLoadFailed = false;
 let lastFutureRefreshAt = 0;
+let prevLoadQueued = false;
 const FUTURE_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000;
+const PREV_LOAD_TRIGGER_PX = 120;
 const IS_OWNER_HOST = {{ "true" if is_owner_host else "false" }};
 const AMAZON_AFFILIATE_TAG = "{{ amazon_affiliate_tag }}";
 
@@ -623,12 +624,12 @@ function createSection(books, currentDate) {
 }
 
 function appendBooks(books, currentDate, prepend = false) {
-    if (!books.length) return;
+    if (!books.length) return false;
 
     const container = document.getElementById("book-container");
 
     if (container.querySelector(`[data-date="${CSS.escape(currentDate)}"]`)) {
-        return;
+        return false;
     }
 
     const section = createSection(books, currentDate);
@@ -641,6 +642,7 @@ function appendBooks(books, currentDate, prepend = false) {
 
     observeSection(section);
     updateStatusByViewport();
+    return true;
 }
 
 async function fetchBooks(date, direction) {
@@ -661,7 +663,7 @@ async function loadNext() {
     try {
         const requestedDate = nextDate;
         const data = await fetchBooks(nextDate, "next");
-        appendBooks(data.books, data.current_date, false);
+        const appended = appendBooks(data.books, data.current_date, false);
         nextDate = data.next_date;
 
         if (!nextDate) {
@@ -671,7 +673,7 @@ async function loadNext() {
             loader.innerText = "Loading...";
         }
 
-        return requestedDate !== nextDate || !!data.books.length;
+        return requestedDate !== nextDate || appended;
     } catch (err) {
         console.error("Error loading next books:", err);
         nextLoadFailed = true;
@@ -684,22 +686,28 @@ async function loadNext() {
 }
 
 async function loadPrev() {
-    if (!prevDate || loadingPrev) return;
+    if (!prevDate || loadingPrev) return false;
 
     loadingPrev = true;
     try {
+        const requestedDate = prevDate;
         const beforeHeight = document.documentElement.scrollHeight;
         const beforeTop = window.scrollY;
 
         const data = await fetchBooks(prevDate, "prev");
-        appendBooks(data.books, data.current_date, true);
+        const appended = appendBooks(data.books, data.current_date, true);
         prevDate = data.next_date;
 
-        const afterHeight = document.documentElement.scrollHeight;
-        const delta = afterHeight - beforeHeight;
-        window.scrollTo(0, beforeTop + delta);
+        if (appended) {
+            const afterHeight = document.documentElement.scrollHeight;
+            const delta = afterHeight - beforeHeight;
+            window.scrollTo(0, beforeTop + delta);
+        }
+
+        return requestedDate !== prevDate || appended;
     } catch (err) {
         console.error("Error loading previous books:", err);
+        return false;
     } finally {
         loadingPrev = false;
     }
@@ -782,6 +790,22 @@ async function fillFutureUntilLoaderLeavesViewport(maxSteps = 20) {
         if (!progressed || beforeNextDate === nextDate) {
             break;
         }
+    }
+}
+
+async function maybeLoadPrevFromTop() {
+    if (prevLoadQueued || loadingPrev || !prevDate) {
+        return;
+    }
+    if (window.scrollY > PREV_LOAD_TRIGGER_PX) {
+        return;
+    }
+
+    prevLoadQueued = true;
+    try {
+        await loadPrev();
+    } finally {
+        prevLoadQueued = false;
     }
 }
 
@@ -923,18 +947,7 @@ const observerNext = new IntersectionObserver((entries) => {
     threshold: 0
 });
 
-const observerPrev = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
-        loadPrev();
-    }
-}, {
-    root: null,
-    rootMargin: "300px 0px",
-    threshold: 0
-});
-
 observerNext.observe(document.getElementById("loader"));
-observerPrev.observe(document.getElementById("top-sentinel"));
 
 let visibleSections = new Map();
 let sectionObserver = null;
@@ -1008,10 +1021,12 @@ function setupSectionObserver() {
 
 window.addEventListener("scroll", () => {
     updateStatusByViewport();
+    maybeLoadPrevFromTop();
 }, { passive: true });
 
 window.addEventListener("resize", () => {
     updateStatusByViewport();
+    maybeLoadPrevFromTop();
 });
 
 document.addEventListener("visibilitychange", async () => {
@@ -1027,6 +1042,7 @@ async function init() {
     await loadNext();
     await ensureScrollable();
     await fillFutureUntilLoaderLeavesViewport();
+    await maybeLoadPrevFromTop();
     lastFutureRefreshAt = Date.now();
     updateStatusByViewport();
 }
