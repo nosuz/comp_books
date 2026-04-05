@@ -176,6 +176,35 @@
         return section;
     }
 
+    function createEmptyTodaySection(currentDate) {
+        const section = document.createElement("section");
+        section.className = "date-section is-today";
+        section.dataset.date = currentDate;
+        section.id = "today-section";
+        section.setAttribute("aria-label", `今日発売 ${currentDate}`);
+
+        const inner = document.createElement("div");
+        inner.className = "date-section-inner";
+
+        const title = document.createElement("div");
+        title.className = "date-title";
+        title.textContent = formatDateLabel(currentDate);
+        inner.appendChild(title);
+
+        const subtitle = document.createElement("div");
+        subtitle.className = "date-subtitle";
+        subtitle.textContent = "今日は新刊の予定がありません。右下の「今日」ボタンでいつでもこの位置へ戻れます。";
+        inner.appendChild(subtitle);
+
+        const empty = document.createElement("div");
+        empty.className = "today-empty-message";
+        empty.textContent = "本日の出版予定はありません。";
+        inner.appendChild(empty);
+
+        section.appendChild(inner);
+        return section;
+    }
+
     function observeSection(section) {
         if (!state.sectionObserver) return;
         state.sectionObserver.observe(section);
@@ -200,6 +229,52 @@
         observeSection(section);
         updateStatusByViewport();
         return true;
+    }
+
+    function insertTodayPlaceholder(currentDate) {
+        const container = document.getElementById("book-container");
+
+        const existing = document.querySelector(`[data-date="${CSS.escape(currentDate)}"]`);
+        if (existing) {
+            if (!existing.id) {
+                existing.id = "today-section";
+            }
+            existing.classList.add("is-today");
+            existing.setAttribute("aria-label", `今日発売 ${currentDate}`);
+
+            const title = existing.querySelector(".date-title");
+            if (title) {
+                title.textContent = formatDateLabel(currentDate);
+            }
+
+            if (!existing.querySelector(".date-subtitle")) {
+                const subtitle = document.createElement("div");
+                subtitle.className = "date-subtitle";
+                subtitle.textContent = "今日は新刊の予定がありません。右下の「今日」ボタンでいつでもこの位置へ戻れます。";
+                const inner = existing.querySelector(".date-section-inner");
+                if (inner) {
+                    const firstChildAfterTitle = inner.querySelector(".grid") || inner.children[1] || null;
+                    inner.insertBefore(subtitle, firstChildAfterTitle);
+                }
+            }
+
+            return existing;
+        }
+
+        const placeholder = createEmptyTodaySection(currentDate);
+
+        const sections = [...container.querySelectorAll(".date-section")];
+        const nextSection = sections.find((section) => (section.dataset.date || "") > currentDate);
+
+        if (nextSection) {
+            container.insertBefore(placeholder, nextSection);
+        } else {
+            container.appendChild(placeholder);
+        }
+
+        observeSection(placeholder);
+        updateStatusByViewport();
+        return placeholder;
     }
 
     async function fetchBooks(date, direction) {
@@ -485,10 +560,19 @@
             el.setAttribute("aria-label", `${el.dataset.date} 発売`);
 
             const oldSubtitle = el.querySelector(".date-subtitle");
-            if (oldSubtitle) oldSubtitle.remove();
+            if (oldSubtitle) {
+                oldSubtitle.remove();
+            }
+
+            const oldEmpty = el.querySelector(".today-empty-message");
+            if (oldEmpty) {
+                oldEmpty.remove();
+            }
 
             const oldTitle = el.querySelector(".date-title");
-            if (oldTitle) oldTitle.textContent = formatDateLabel(el.dataset.date);
+            if (oldTitle) {
+                oldTitle.textContent = formatDateLabel(el.dataset.date);
+            }
         }
 
         const existingSection = document.querySelector(`[data-date="${CSS.escape(today)}"]`);
@@ -498,13 +582,14 @@
             existingSection.setAttribute("aria-label", `今日発売 ${today}`);
 
             const title = existingSection.querySelector(".date-title");
-            if (title) title.textContent = formatDateLabel(today);
+            if (title) {
+                title.textContent = formatDateLabel(today);
+            }
 
             if (!existingSection.querySelector(".date-subtitle")) {
                 const subtitle = document.createElement("div");
                 subtitle.className = "date-subtitle";
                 subtitle.textContent = "ここが今日発売の本です。右下の「今日」ボタンでいつでもこの位置へ戻れます。";
-
                 const inner = existingSection.querySelector(".date-section-inner");
                 const grid = existingSection.querySelector(".grid");
                 if (inner && grid) {
@@ -518,14 +603,10 @@
             return;
         }
 
-        const data = await fetchBooks(today, "next");
-        appendBooks(data.books, data.current_date, false);
-        state.nextDate = data.next_date;
-
-        el = document.getElementById("today-section");
-        if (el) {
-            el.scrollIntoView({ behavior: "auto", block: "start" });
-        }
+        // 今日に本が無い場合でも、前後関係の正しい位置に空の今日セクションを作る
+        await fetchBooks(today, "next");  // 将来データが未ロードでもAPI疎通は確認
+        el = insertTodayPlaceholder(today);
+        el.scrollIntoView({ behavior: "auto", block: "start" });
 
         await fillFutureUntilLoaderLeavesViewport();
         updateStatusByViewport();
@@ -602,6 +683,9 @@
         setupNextObserver();
         setupTodayButton();
         setupWindowEvents();
+
+        // 👇 これを追加（最重要）
+        insertTodayPlaceholder(getCurrentDateString());
 
         await loadNext();
         await ensureScrollable();

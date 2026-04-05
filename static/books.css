@@ -336,6 +336,18 @@ body {
     font-size: 12px;
 }
 
+.today-empty-message {
+    margin-top: 8px;
+    padding: 20px 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.75);
+    color: var(--today-text);
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+    border: 1px dashed rgba(244, 180, 0, 0.65);
+}
+
 @media (max-width: 640px) {
     .container {
         margin-top: 18px;
