@@ -684,10 +684,13 @@
         setupTodayButton();
         setupWindowEvents();
 
-        // 👇 これを追加（最重要）
-        insertTodayPlaceholder(getCurrentDateString());
-
         await loadNext();
+
+        const today = getCurrentDateString();
+        if (!document.querySelector(`[data-date="${CSS.escape(today)}"]`)) {
+            insertTodayPlaceholder(today);
+        }
+
         await ensureScrollable();
         await fillFutureUntilLoaderLeavesViewport();
         await maybeLoadPrevFromTop();
